@@ -5,6 +5,7 @@ import { ToastProvider } from "../contexts/toastcontext";
 import Navbar from "../components/navbar";
 import { AuthProvider } from "../contexts/authcontext";
 import { Suspense } from "react";
+import Footer from "../components/footer";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -21,15 +22,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={`bg-background text-white`}>
 
-
         <Suspense>
           <ToastProvider>
             <AuthProvider>
               <div className="min-h-screen flex flex-col">
+                <Navbar />
                 <main className="flex-1">
-                  <Navbar />
                   {children}
                 </main>
+                <Footer />
               </div>
             </AuthProvider>
           </ToastProvider>

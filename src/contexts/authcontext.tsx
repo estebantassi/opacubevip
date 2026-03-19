@@ -28,9 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try { return JSON.parse(cookie) as User; } catch { return null; }
     });
     const [avatar, setAvatar] = useState<string | null>(null);
-    /* eslint-disable react-hooks/set-state-in-effect*/
     useEffect(() => { setAvatar(user ? localStorage.getItem(`avatar-${user.uuid}`) : null); }, [user]);
-    /* eslint-enable react-hooks/set-state-in-effect*/
 
     const router = useRouter();
 
@@ -59,15 +57,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (status == 'success') {
             const cookie = Cookies.get("user");
             if (!cookie) return AddToast("Error grabbing user cookie", "error");;
-            /* eslint-disable react-hooks/set-state-in-effect*/
             setUser(JSON.parse(cookie) as User);
-            /* eslint-enable react-hooks/set-state-in-effect*/
             AddToast("Successfully logged in", "success");
         } else if (status == 'error') {
             AddToast(error ?? "Unknown error", "error");
         }
-        
+
+    /* eslint-disable react-hooks/exhaustive-deps*/
     }, []);
+    /* eslint-enable react-hooks/exhaustive-deps*/
 
     const Logout = async () => {
         await logout();
@@ -101,9 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }
 
-    /* eslint-disable react-hooks/set-state-in-effect*/
     const [mounted, setMounted] = useState(false); useEffect(() => { setMounted(true) }, []); if (!mounted) return null;
-    /* eslint-enable react-hooks/set-state-in-effect*/
 
     return (
         <AuthContext value={{
