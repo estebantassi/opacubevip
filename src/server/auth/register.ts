@@ -6,7 +6,7 @@ import { RegisterInput, RegisterSchema } from "../../schemas/register/schemas";
 import { ActionHandler } from "../handler";
 import crypto from "crypto";
 import { Token } from "../token";
-import { transporter } from "../../lib/mailer";
+import getTransporter from "../../lib/mailer";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 const EMAIL_ENCRYPTION_SECRET_VERSION = String(process.env.EMAIL_ENCRYPTION_SECRET_VERSION);
@@ -41,7 +41,7 @@ export const register = ActionHandler<RegisterInput>({
         const verifyToken = new Token(request.uuid, Token.Type.VERIFY, Token.StorageType.CACHE);
         if (!await verifyToken.Save(tx)) return { success: false, message: "Error saving token" };
 
-        await transporter.sendMail({
+        await getTransporter().sendMail({
             from: SECURITY_EMAIL,
             to: input.email,
             subject: "Verification Code",

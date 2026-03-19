@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { ActionResult } from "../../../types/types";
 import { Token } from "../../token";
-import db from "../../../lib/db";
 import { deleteCachedValue } from "../../../lib/redis";
+import getDB from "../../../lib/db";
 
 export const logout = async (): Promise<ActionResult> => {
 
@@ -12,7 +12,7 @@ export const logout = async (): Promise<ActionResult> => {
     if (!tokenData.success) return tokenData;
 
     try {
-        await db`
+        await getDB()`
             DELETE FROM tokens
             WHERE useruuid=${tokenData.data.useruuid} AND jti=${tokenData.data.jti} AND type=${Token.Type.REFRESH}
         `;

@@ -1,33 +1,41 @@
 import redis from "redis";
 
-const appName = process.env.APPNAME;
-const redisURL = process.env.REDIS_URL;
+let cachedRedis: ReturnType<typeof redis.createClient> | null = null;
+let appName: string | null = null;
 
-const redisClient = redis.createClient({
-    url: redisURL,
-});
+export default function getRedis() {
+    if (!appName) appName = String(process.env.APPNAME);
+    if (cachedRedis) return cachedRedis;
 
-redisClient.on('error', (err) => {
-    console.error('Redis connection error: ', err);
-});
+    const redisClient = redis.createClient({
+        url: process.env.REDIS_URL,
+    });
+
+    redisClient.on('error', (err) => {
+        console.error('Redis connection error: ', err);
+    });
+
+    cachedRedis = redisClient;
+    return cachedRedis;
+}
 
 async function connectRedis() {
-    if (!redisClient.isOpen) {
-        await redisClient.connect();
+    if (!getRedis().isOpen) {
+        await getRedis().connect();
     }
 }
 
 export async function getCachedValue(key: string) {
     await connectRedis();
-    return await redisClient.get(appName + "/" + key);
+    return await getRedis().get(appName + "/" + key);
 }
 
 export async function setCachedValue(key: string, ttlInSeconds: number, value: string) {
     await connectRedis();
-    await redisClient.setEx(appName + "/" + key, ttlInSeconds, value);
+    await getRedis().setEx(appName + "/" + key, ttlInSeconds, value);
 }
 
 export async function deleteCachedValue(key: string) {
     await connectRedis();
-    await redisClient.del(appName + "/" + key);
+    await getRedis().del(appName + "/" + key);
 }

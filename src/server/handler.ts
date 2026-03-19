@@ -1,9 +1,9 @@
 import z from "zod";
-import db from "../lib/db";
 import { ActionResult } from "../types/types";
 import postgres from "postgres";
 import { Token, TokenContent, TokenType } from "./token";
 import { cookies } from "next/headers";
+import getDB from "../lib/db";
 
 type HandlerOptionsBase<TInput> = {
     schema?: z.ZodType<TInput>;
@@ -53,7 +53,7 @@ export function ActionHandler<TInput, TOutput = unknown>(options:  HandlerOption
 
             //if transaction, return handler
             if (options.transaction) {
-                return await db.begin(async (transaction) => {
+                return await getDB().begin(async (transaction) => {
 
                     const tx = (transaction as unknown as postgres.Sql);
 

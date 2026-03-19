@@ -1,6 +1,6 @@
 "use server";
 
-import db from "../lib/db";
+import getDB from "../lib/db";
 import { GetImage } from "../lib/gcs/images";
 
 import { validateSchema } from "../lib/tools";
@@ -12,7 +12,7 @@ export const getUserProfile = async (data: UserProfileInput): Promise<ActionResu
     if (!result.success) return { success: false, message: result.message }
 
     try {
-        const [request] = await db<{ avatar: boolean, username: string, uuid: string }[]>`
+        const [request] = await getDB()<{ avatar: boolean, username: string, uuid: string }[]>`
             SELECT avatar, username, uuid
             FROM users
             WHERE uuid=${data.uuid}

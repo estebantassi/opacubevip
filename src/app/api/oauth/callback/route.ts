@@ -5,7 +5,7 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 import { GetGoogleUser } from "../../../../lib/oauth/getuser/google";
 import { encrypt } from "../../../../lib/tools";
-import db from "../../../../lib/db";
+import getDB from "../../../../lib/db";
 import axios from "axios";
 import { compressImage } from "../../../../lib/compressimage";
 import { Token } from "../../../../server/token";
@@ -86,7 +86,7 @@ export async function GET(req: Request) {
             avatar = compressedAvatar.success ? compressedAvatar.data : null;
         }
 
-        const finaluser = await db.begin(async (tx) => {
+        const finaluser = await getDB().begin(async (tx) => {
             const [request] = await tx<{ uuid: string, username: string, auth_method: string, avatar: boolean, inserted: boolean }[]>`
                 INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, avatar)
                 VALUES (${new Date().toISOString()}, ${emailHash}, ${emailEncrypted}, ${providerPretty}, ${user.username}, ${avatar != null})

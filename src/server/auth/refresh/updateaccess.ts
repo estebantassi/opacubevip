@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { ActionResult } from "../../../types/types";
 import { Token } from "../../token";
-import db from "../../../lib/db";
 import { deleteCachedValue } from "../../../lib/redis";
+import getDB from "../../../lib/db";
 
 export const updateAccess = async (): Promise<ActionResult> => {
     const tokenData = await Token.GetData((await cookies()).get("token_" + Token.Type.REFRESH.toLowerCase())?.value, Token.Type.REFRESH);
@@ -17,7 +17,7 @@ export const updateAccess = async (): Promise<ActionResult> => {
     if (!await refreshToken.Save()) return { success: false, message: "Error creating a token" };
 
     try {
-        await db`
+        await getDB()`
             DELETE FROM tokens
             WHERE useruuid=${tokenData.data.useruuid} AND jti=${tokenData.data.jti} AND type=${Token.Type.REFRESH}
         `

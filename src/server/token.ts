@@ -2,8 +2,8 @@ import postgres from "postgres";
 import jwt from "jsonwebtoken";
 import { getCachedValue, setCachedValue } from "../lib/redis";
 import { cookies } from "next/headers";
-import db from "../lib/db";
 import { ActionResult } from "../types/types";
+import getDB from "../lib/db";
 
 const TokenType = {
     ACCESS: "access",
@@ -57,7 +57,7 @@ export class Token {
         this.type = type;
     }
 
-    async Save(database: postgres.Sql | postgres.TransactionSql = db) {
+    async Save(database: postgres.Sql | postgres.TransactionSql = getDB()) {
         try {
             if (this.content.storagetype != TokenStorageType.DATABASE)
                 await setCachedValue(`${this.content.useruuid}/tokens/${this.type}/${this.content.jti}`, this.duration * 60 * 60 + 10, "1");
@@ -113,7 +113,7 @@ export class Token {
         }
 
         if (decode.storagetype != Token.StorageType.CACHE) {
-            const [response] = await db<{ useruuid: string, jti: string, type: TokenType, expires_at: Date }[]>`
+            const [response] = await getDB()<{ useruuid: string, jti: string, type: TokenType, expires_at: Date }[]>`
                 SELECT expires_at FROM tokens
                 WHERE useruuid=${decode.useruuid} AND jti=${decode.jti} AND type=${type}
             `;
@@ -121,7 +121,7 @@ export class Token {
             if (!response) return { success: false, message: "Token expired, revoked or inexistant", authorized: false };
             if (new Date(response.expires_at) < new Date()) {
                 try {
-                    await db`
+                    await getDB()`
                         DELETE FROM tokens
                         WHERE useruuid=${decode.useruuid} AND jti=${decode.jti} AND type=${type}
                     `;

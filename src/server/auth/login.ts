@@ -2,7 +2,6 @@
 
 import crypto from "crypto";
 
-import db from "../../lib/db";
 import { LoginInput, LoginSchema, LoginStartInput, LoginStartSchema } from "../../schemas/login/schemas";
 import { Token } from "../token";
 import srp from "secure-remote-password/server";
@@ -11,6 +10,7 @@ import { deleteCachedValue, getCachedValue, setCachedValue } from "../../lib/red
 import { cookies } from "next/headers";
 import { GetImage } from "../../lib/gcs/images";
 import { ActionHandler } from "../handler";
+import getDB from "../../lib/db";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 
@@ -26,7 +26,7 @@ export const loginStart = ActionHandler<LoginStartInput, LoginStartReturnType>({
 
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
 
-        const [request] = await db<{ uuid: string, srp_salt: string, srp_verifier: string, verified: boolean, auth_method: string }[]>`
+        const [request] = await getDB()<{ uuid: string, srp_salt: string, srp_verifier: string, verified: boolean, auth_method: string }[]>`
             SELECT uuid, srp_salt, srp_verifier, verified, auth_method
             FROM users
             WHERE hashed_email=${emailHash}
@@ -67,7 +67,7 @@ export const login = ActionHandler<LoginInput, LoginReturnType>({
 
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
 
-        const [request] = await db<{ uuid: string, srp_salt: string, srp_verifier: string, username: string, avatar: boolean }[]>`
+        const [request] = await getDB()<{ uuid: string, srp_salt: string, srp_verifier: string, username: string, avatar: boolean }[]>`
             SELECT uuid, srp_salt, srp_verifier, username, avatar
             FROM users
             WHERE hashed_email=${emailHash}
