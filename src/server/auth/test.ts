@@ -1,11 +1,14 @@
 "use server";
 
+import { prisma } from "@lib/prisma";
 import { ActionHandler } from "../handler";
 
 export const test = ActionHandler({
-    requireAuth: true,
+    requireAuth: false,
 
     handler: async () => {
-        return { success: true, message: "Successfully successed", data: null };
+        const users = await prisma.users.findMany();
+
+        return { success: true, message: "Successfully successed", data: users };
     }
 });

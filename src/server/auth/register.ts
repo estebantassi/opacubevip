@@ -23,7 +23,9 @@ export const register = ActionHandler<RegisterInput>({
         const emailEncrypted = EMAIL_ENCRYPTION_SECRET_VERSION + ":" + encrypt(input.email, EMAIL_ENCRYPTION_SECRET);
 
         const provider = "OpacubeVIP";
-        const [request] = await tx<{ uuid: string, username: string, auth_method: string, avatar: boolean, inserted: boolean }[]>`
+
+        //Raw query because prisma doesn't support insertion checks
+        const [request] = await tx.$queryRaw<{ uuid: string; username: string; auth_method: string; avatar: boolean; inserted: boolean }[]>`
             INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, avatar, srp_salt, srp_verifier)
             VALUES (${new Date().toISOString()}, ${emailHash}, ${emailEncrypted}, ${provider}, ${input.username}, ${false}, ${input.srpSalt}, ${input.srpVerifier})
             ON CONFLICT (hashed_email)
@@ -38,7 +40,7 @@ export const register = ActionHandler<RegisterInput>({
         const code = crypto.randomBytes(3).toString("hex").toUpperCase();
         await setCachedValue(`${request.uuid}/signup/codes/${code}`, 60 * 30, '1');
 
-        const verifyToken = new Token(request.uuid, Token.Type.VERIFY, Token.StorageType.CACHE);
+        const verifyToken = new Token(request.uuid, Token.Type.verify, Token.StorageType.CACHE);
         if (!await verifyToken.Save(tx)) return { success: false, message: "Error saving token" };
 
         await getTransporter().sendMail({

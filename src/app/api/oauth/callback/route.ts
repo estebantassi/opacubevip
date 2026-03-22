@@ -5,7 +5,6 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 import { GetGoogleUser } from "../../../../lib/oauth/getuser/google";
 import { encrypt } from "../../../../lib/tools";
-import getDB from "../../../../lib/db";
 import axios from "axios";
 import { compressImage } from "../../../../lib/compressimage";
 import { Token } from "../../../../server/token";
@@ -16,6 +15,7 @@ import { GetDiscordUser } from "../../../../lib/oauth/getuser/discord";
 import { GetGitlabUser } from "../../../../lib/oauth/getuser/gitlab";
 import { GetTwitchUser } from "../../../../lib/oauth/getuser/twitch";
 import { GetGithubUser } from "../../../../lib/oauth/getuser/github";
+import { prisma } from "@lib/prisma";
 
 const LOG_ERRORS = Boolean(process.env.LOG_ERRORS === "true");
 
@@ -86,8 +86,8 @@ export async function GET(req: Request) {
             avatar = compressedAvatar.success ? compressedAvatar.data : null;
         }
 
-        const finaluser = await getDB().begin(async (tx) => {
-            const [request] = await tx<{ uuid: string, username: string, auth_method: string, avatar: boolean, inserted: boolean }[]>`
+        const finalUser = await prisma.$transaction(async (tx) => {
+            const [request] = await tx.$queryRaw<{ uuid: string; username: string; auth_method: string; avatar: boolean; inserted: boolean }[]>`
                 INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, avatar)
                 VALUES (${new Date().toISOString()}, ${emailHash}, ${emailEncrypted}, ${providerPretty}, ${user.username}, ${avatar != null})
                 ON CONFLICT (hashed_email)
@@ -98,10 +98,10 @@ export async function GET(req: Request) {
 
             if (providerPretty != request.auth_method) throw { success: false, message: `You already have an account associated with this email using another service ('${request.auth_method}')` };
 
-            const accessToken = new Token(request.uuid, Token.Type.ACCESS, Token.StorageType.CACHE);
+            const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE);
             if (!await accessToken.Save(tx)) throw { success: false, message: "Error creating a token" };
 
-            const refreshToken = new Token(request.uuid, Token.Type.REFRESH, Token.StorageType.BOTH, null, accessToken.content.jti);
+            const refreshToken = new Token(request.uuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti);
             if (!await refreshToken.Save(tx)) throw { success: false, message: "Error creating a token" };
 
             if (request.inserted && avatar) {
@@ -131,11 +131,11 @@ export async function GET(req: Request) {
             return userToReturn;
         });
 
-        const response = NextResponse.redirect(CLIENT_URL + "/profile?oauth=success");
+        const response = NextResponse.redirect(`${CLIENT_URL}/profile/${finalUser.uuid}?oauth=success`);
 
         response.cookies.set({
             name: "user",
-            value: JSON.stringify(finaluser),
+            value: JSON.stringify(finalUser),
             sameSite: "strict",
             secure: process.env.NEXT_PUBLIC_SECURE === "true",
             maxAge: 60 * 60 * 24 * 7

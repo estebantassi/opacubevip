@@ -1,34 +1,21 @@
 import z from "zod";
 import { ActionResult } from "../types/types";
-import postgres from "postgres";
-import { Token, TokenContent, TokenType } from "./token";
+import { Token, TokenContent } from "./token";
 import { cookies } from "next/headers";
-import getDB from "../lib/db";
+import { prisma, DB } from "@lib/prisma";
+import { token_type } from "@prisma/enums";
 
-type HandlerOptionsBase<TInput> = {
+type HandlerOptions<TInput, TOutput> = {
     schema?: z.ZodType<TInput>;
     requireAuth?: boolean;
-    authType?: TokenType;
-};
-
-type HandlerOptionsWithTx<TInput, TOutput> = HandlerOptionsBase<TInput> & {
-    transaction: true;
+    authType?: token_type;
+    transaction?: boolean;
     handler: (ctx: {
         input: TInput;
         auth: TokenContent;
-        tx: postgres.Sql;
+        tx: DB;
     }) => Promise<ActionResult<TOutput>>;
 };
-
-type HandlerOptionsWithoutTx<TInput, TOutput> = HandlerOptionsBase<TInput> & {
-    transaction?: false;
-    handler: (ctx: {
-        input: TInput;
-        auth: TokenContent;
-    }) => Promise<ActionResult<TOutput>>;
-};
-
-type HandlerOptions<TInput, TOutput> = HandlerOptionsWithTx<TInput, TOutput> | HandlerOptionsWithoutTx<TInput, TOutput>;
 
 export function ActionHandler<TInput, TOutput = unknown>(options:  HandlerOptions<TInput, TOutput>) {
     return async (input?: TInput): Promise<ActionResult<TOutput>> => {
@@ -45,7 +32,7 @@ export function ActionHandler<TInput, TOutput = unknown>(options:  HandlerOption
             //check authentication
             let authContent: TokenContent | null = null;
             if (options.requireAuth) {
-                const type = options.authType ? options.authType : Token.Type.ACCESS;
+                const type = options.authType ? options.authType : Token.Type.access;
                 const tokenData = await Token.GetData((await cookies()).get("token_" + type.toLowerCase())?.value, type);
                 if (!tokenData.success) return tokenData;
                 authContent = tokenData.data;
@@ -53,14 +40,12 @@ export function ActionHandler<TInput, TOutput = unknown>(options:  HandlerOption
 
             //if transaction, return handler
             if (options.transaction) {
-                return await getDB().begin(async (transaction) => {
-
-                    const tx = (transaction as unknown as postgres.Sql);
+                return await prisma.$transaction(async (transaction) => {
 
                     const result = await options.handler({
                         input: validatedInput,
                         auth: authContent as TokenContent,
-                        tx 
+                        tx: transaction
                     });
 
                     if (!result.success) throw result;
@@ -74,7 +59,8 @@ export function ActionHandler<TInput, TOutput = unknown>(options:  HandlerOption
             //else return without the transaction
             return await options.handler({
                 input: validatedInput,
-                auth: authContent as TokenContent
+                auth: authContent as TokenContent,
+                tx: prisma
             });
 
         } catch (err) {

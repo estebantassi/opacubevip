@@ -1,5 +1,11 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+        "paths": {
+      "@lib/*": ["src/lib/*"],
+      "@server/*": ["src/server/*"],
+      "@prisma/*": ["generated/prisma/*"]
+    },
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,

@@ -18,29 +18,34 @@ export const verify = ActionHandler<VerifyInput, VerifyReturnType>({
     schema: VerifySchema,
     transaction: true,
     requireAuth: true,
-    authType: Token.Type.VERIFY,
+    authType: Token.Type.verify,
 
     handler: async ({ input, tx, auth }) => {
 
-        const [request] = await tx<{ uuid: string, username: string, avatar: boolean }[]>`
-            UPDATE users
-            SET verified = true
-            WHERE uuid = ${auth.useruuid}
-            RETURNING uuid, username, avatar
-        `;
+        const request = await tx.users.update({
+            where: { uuid: auth.useruuid },
+            data: {
+                verified: true,
+            },
+                select: {
+                uuid: true,
+                username: true,
+                avatar: true
+            }
+        });
         if (!request) return { success: false, message: "User not found" };
 
         const avatarURL = request.avatar ? `users/${request.uuid}/avatar` : `Default/avatar`;
         const avatar = await GetImage(avatarURL);
         if (!avatar) return { success: false, message: "Error fetching avatar" };
 
-        const accessToken = new Token(request.uuid, Token.Type.ACCESS, Token.StorageType.CACHE);
+        const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE);
         if (!await accessToken.Save(tx)) return { success: false, message: "Error creating a token" };
 
-        const refreshToken = new Token(request.uuid, Token.Type.REFRESH, Token.StorageType.BOTH, null, accessToken.content.jti);
+        const refreshToken = new Token(request.uuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti);
         if (!await refreshToken.Save(tx)) return { success: false, message: "Error creating a token" };
 
-        Token.Remove("token_" + Token.Type.VERIFY.toLowerCase());
+        Token.Remove("token_" + Token.Type.verify);
         deleteCachedValue(`${request.uuid}/signup/codes/${input.code}`);
 
         const user = {

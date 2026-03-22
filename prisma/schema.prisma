@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model tokens {
+  jti        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  useruuid   String     @db.Uuid
+  type       token_type
+  expires_at DateTime
+  users      users      @relation(fields: [useruuid], references: [uuid], onDelete: Cascade, map: "rel_users_uuid")
+}
+
+model users {
+  uuid            String    @id @unique(map: "uuid_unique") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at      DateTime
+  hashed_email    String    @unique(map: "hashed_email_unique") @db.Char(64)
+  auth_method     auth_type
+  encrypted_email String    @db.VarChar(259)
+  username        String    @db.VarChar(30)
+  avatar          Boolean   @default(false)
+  srp_salt        String?   @db.Char(64)
+  srp_verifier    String?   @db.Char(512)
+  verified        Boolean   @default(false)
+  tokens          tokens[]
+}
+
+enum auth_type {
+  Google
+  OpacubeVIP
+  Discord
+  Github
+  Twitch
+  Gitlab
+}
+
+enum token_type {
+  access
+  refresh
+  login
+  verify
+}

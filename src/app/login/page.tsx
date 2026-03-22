@@ -56,7 +56,7 @@ export default function Login() {
         setUser(loginRequest.data.user);
         AddToast(loginRequest.message, "success");
 
-        return router.push('/home');
+        return router.push('/profile/' + loginRequest.data.user.uuid);
     }
 
     return (

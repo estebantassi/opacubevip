@@ -15,7 +15,7 @@ export const GetImage = async (filepath: string) => {
         const [signedUrl] = await getBucket().file(filepath).getSignedUrl(options);
 
         await setCachedValue(filepath, 55 * 60, signedUrl);
-        return "signedUrl";
+        return signedUrl;
     } catch (err) {
         if (process.env.LOG_ERRORS === 'true') console.error(err);
         return null;

@@ -1,29 +1,25 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { ActionResult } from "../../../types/types";
 import { Token } from "../../token";
 import { deleteCachedValue } from "../../../lib/redis";
-import getDB from "../../../lib/db";
+import { ActionHandler } from "@server/handler";
 
-export const updateAccess = async (): Promise<ActionResult> => {
-    const tokenData = await Token.GetData((await cookies()).get("token_" + Token.Type.REFRESH.toLowerCase())?.value, Token.Type.REFRESH);
-    if (!tokenData.success) return tokenData;
+export const updateAccess = ActionHandler({
+    requireAuth: true,
+    authType: Token.Type.refresh,
 
-    const accessToken = new Token(tokenData.data.useruuid, Token.Type.ACCESS, Token.StorageType.CACHE);
-    if (!await accessToken.Save()) return { success: false, message: "Error creating a token" };
+    handler: async ({ tx, auth }) => {
 
-    const refreshToken = new Token(tokenData.data.useruuid, Token.Type.REFRESH, Token.StorageType.BOTH, null, accessToken.content.jti);
-    if (!await refreshToken.Save()) return { success: false, message: "Error creating a token" };
+        const accessToken = new Token(auth.useruuid, Token.Type.access, Token.StorageType.CACHE);
+        if (!await accessToken.Save()) return { success: false, message: "Error creating a token" };
 
-    try {
-        await getDB()`
-            DELETE FROM tokens
-            WHERE useruuid=${tokenData.data.useruuid} AND jti=${tokenData.data.jti} AND type=${Token.Type.REFRESH}
-        `
+        const refreshToken = new Token(auth.useruuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti);
+        if (!await refreshToken.Save()) return { success: false, message: "Error creating a token" };
 
-        deleteCachedValue(`${tokenData.data.useruuid}/tokens/${Token.Type.ACCESS}/${tokenData.data.accessjti}`);
-    } catch (err) { if (process.env.LOG_ERRORS === 'true') console.error(err); }
+        try { await tx.tokens.delete({ where: { jti: auth.jti } }); } catch (err) { if (process.env.LOG_ERRORS === 'true') console.error(err); }
 
-    return { success: true, message: "Access granted", data: null };
-};
+        try { deleteCachedValue(`${auth.useruuid}/tokens/${Token.Type.access}/${auth.accessjti}`); } catch (err) { if (process.env.LOG_ERRORS === 'true') console.error(err); }
+
+        return { success: true, message: "Access granted", data: null };
+    }
+});

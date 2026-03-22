@@ -10,7 +10,6 @@ import { deleteCachedValue, getCachedValue, setCachedValue } from "../../lib/red
 import { cookies } from "next/headers";
 import { GetImage } from "../../lib/gcs/images";
 import { ActionHandler } from "../handler";
-import getDB from "../../lib/db";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 
@@ -22,22 +21,26 @@ type LoginStartReturnType = {
 export const loginStart = ActionHandler<LoginStartInput, LoginStartReturnType>({
     schema: LoginStartSchema,
 
-    handler: async ({ input }) => {
+    handler: async ({ input, tx }) => {
 
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
 
-        const [request] = await getDB()<{ uuid: string, srp_salt: string, srp_verifier: string, verified: boolean, auth_method: string }[]>`
-            SELECT uuid, srp_salt, srp_verifier, verified, auth_method
-            FROM users
-            WHERE hashed_email=${emailHash}
-            LIMIT 1
-        `;
+        const request = await tx.users.findUnique({
+            where: { hashed_email: emailHash },
+            select: {
+                srp_verifier: true,
+                srp_salt: true,
+                uuid: true,
+                verified: true,
+                auth_method: true,
+            },
+        });
         if (!request) return { success: false, message: "User not found" };
 
-        if (request.auth_method != "OpacubeVIP") return { success: false, message: `You already have an account associated with this email using another service (${request.auth_method})` };
+        if (request.auth_method != "OpacubeVIP" || !request.srp_verifier || !request.srp_salt) return { success: false, message: `You already have an account associated with this email using another service (${request.auth_method})` };
         if (!request.verified) return { success: false, message: `Your account is not verified` };
 
-        const loginToken = new Token(request.uuid, Token.Type.LOGIN, Token.StorageType.CACHE, 0);
+        const loginToken = new Token(request.uuid, Token.Type.login, Token.StorageType.CACHE, 0);
         if (!await loginToken.Save()) return { success: false, message: `Error saving token` };
 
         const srpServerEphemeral = srp.generateEphemeral(request.srp_verifier);
@@ -59,24 +62,30 @@ type LoginReturnType = {
 export const login = ActionHandler<LoginInput, LoginReturnType>({
     schema: LoginSchema,
 
-    handler: async ({ input }) => {
+    handler: async ({ input, tx }) => {
 
-        const tokenData = await Token.GetData((await cookies()).get("token_" + Token.Type.LOGIN.toLowerCase())?.value, Token.Type.LOGIN);
+        const tokenData = await Token.GetData((await cookies()).get("token_" + Token.Type.login)?.value, Token.Type.login);
         if (!tokenData.success) return tokenData;
         if (tokenData.data.step != 0) return { success: false, message: "Invalid token step" }
 
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
 
-        const [request] = await getDB()<{ uuid: string, srp_salt: string, srp_verifier: string, username: string, avatar: boolean }[]>`
-            SELECT uuid, srp_salt, srp_verifier, username, avatar
-            FROM users
-            WHERE hashed_email=${emailHash}
-            LIMIT 1
-        `;
+        const request = await tx.users.findUnique({
+            where: { hashed_email: emailHash },
+            select: {
+                srp_verifier: true,
+                srp_salt: true,
+                uuid: true,
+                username: true,
+                avatar: true,
+            },
+        });
         if (!request) return { success: false, message: "User not found" };
 
         const srpSecretEphemeral = await getCachedValue(`${request.uuid}/login/ephemeral`);
         if (!srpSecretEphemeral) return { success: false, message: "Request took to long" };
+
+        if (!request.srp_verifier || !request.srp_salt) return { success: false, message: "Error fetching password salt and verifier" };
 
         let srpServerSession: srp.Session;
         try {
@@ -88,14 +97,14 @@ export const login = ActionHandler<LoginInput, LoginReturnType>({
         const avatar = await GetImage(avatarURL);
         if (!avatar) return { success: false, message: "Error fetching avatar" };
 
-        const accessToken = new Token(request.uuid, Token.Type.ACCESS, Token.StorageType.CACHE);
+        const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE);
         if (!await accessToken.Save()) return { success: false, message: "Error creating a token" };
 
-        const refreshToken = new Token(request.uuid, Token.Type.REFRESH, Token.StorageType.BOTH, null, accessToken.content.jti);
+        const refreshToken = new Token(request.uuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti);
         if (!await refreshToken.Save()) return { success: false, message: "Error creating a token" };
 
-        Token.Remove("token_" + Token.Type.LOGIN.toLowerCase());
-        deleteCachedValue(`${request.uuid}/tokens/${Token.Type.LOGIN}/${tokenData.data.jti}`);
+        Token.Remove("token_" + Token.Type.login);
+        deleteCachedValue(`${request.uuid}/tokens/${Token.Type.login}/${tokenData.data.jti}`);
 
         const user = {
             avatar,

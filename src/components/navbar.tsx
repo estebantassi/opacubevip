@@ -23,7 +23,7 @@ export default function Navbar() {
                 {!user && <Link className={pathname==="/register"?active:''} href="/register">Signup</Link>}
 
                 {/* Logged in */}
-                {user && <Link className={pathname==="/profile"?active:''} href="/profile">Profile</Link>}
+                {user && <Link className={pathname===`/profile/${user.uuid}`?active:''} href={`/profile/${user.uuid}`}>Profile</Link>}
                 {/* {user && <Link className={pathname==="/logout"?active:''} href="/logout">Logout</Link>}
                 {user && <Link className={pathname==="/accountsettings"?active:''} href="/accountsettings">Account Settings</Link>} */}
 

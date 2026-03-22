@@ -1,17 +1,9 @@
-import postgres from "postgres";
 import jwt from "jsonwebtoken";
 import { getCachedValue, setCachedValue } from "../lib/redis";
 import { cookies } from "next/headers";
 import { ActionResult } from "../types/types";
-import getDB from "../lib/db";
-
-const TokenType = {
-    ACCESS: "access",
-    REFRESH: "refresh",
-    LOGIN: "login",
-    VERIFY: "verify",
-} as const;
-export type TokenType = typeof TokenType[keyof typeof TokenType];
+import { DB, prisma } from "@lib/prisma";
+import { token_type } from "@prisma/enums";
 
 const TokenStorageType = {
     CACHE: "cache",
@@ -29,17 +21,17 @@ export type TokenContent = {
 }
 
 export class Token {
-    static Type = TokenType;
+    static Type = token_type;
     static StorageType = TokenStorageType;
 
-    public type: TokenType;
+    public type: token_type;
     public content: TokenContent;
     public token: string;
     public exp: Date;
     public duration: number;
     public version: number;
 
-    constructor(useruuid: string, type: TokenType, storagetype: TokenStorageType, step: number | null = null, accessjti: string | null = null) {
+    constructor(useruuid: string, type: token_type, storagetype: TokenStorageType, step: number | null = null, accessjti: string | null = null) {
         const jti = crypto.randomUUID();
 
         this.version = Number(process.env['TOKEN_SECRET_' + type.toUpperCase() + '_VERSION']);
@@ -57,16 +49,20 @@ export class Token {
         this.type = type;
     }
 
-    async Save(database: postgres.Sql | postgres.TransactionSql = getDB()) {
+    async Save(database: DB = prisma) {
         try {
             if (this.content.storagetype != TokenStorageType.DATABASE)
                 await setCachedValue(`${this.content.useruuid}/tokens/${this.type}/${this.content.jti}`, this.duration * 60 * 60 + 10, "1");
 
-            if (this.content.storagetype != TokenStorageType.CACHE && database)
-                await database`
-                    INSERT INTO tokens (useruuid, type, jti, expires_at)
-                    VALUES (${this.content.useruuid}, ${this.type}, ${this.content.jti}, ${this.exp})
-                `;
+            if (this.content.storagetype != TokenStorageType.CACHE)
+                await database.tokens.create({
+                    data: {
+                        useruuid: this.content.useruuid,
+                        type: this.type,
+                        jti: this.content.jti,
+                        expires_at: this.exp,
+                    },
+                });
 
             const cookieStore = await cookies();
             cookieStore.set({
@@ -92,7 +88,7 @@ export class Token {
         cookieStore.delete(name);
     }
 
-    static async GetData(encryptedToken: string | undefined, type: TokenType) : Promise<ActionResult<TokenContent>> {
+    static async GetData(encryptedToken: string | undefined, type: token_type) : Promise<ActionResult<TokenContent>> {
         if (encryptedToken == undefined) return { success: false, message: "Token not present", authorized: false };
 
         const tokenSlicer = encryptedToken.indexOf(":");
@@ -113,18 +109,12 @@ export class Token {
         }
 
         if (decode.storagetype != Token.StorageType.CACHE) {
-            const [response] = await getDB()<{ useruuid: string, jti: string, type: TokenType, expires_at: Date }[]>`
-                SELECT expires_at FROM tokens
-                WHERE useruuid=${decode.useruuid} AND jti=${decode.jti} AND type=${type}
-            `;
+            const response = await prisma.tokens.findUnique({ where: { jti: decode.jti }, select: { expires_at: true }});
 
             if (!response) return { success: false, message: "Token expired, revoked or inexistant", authorized: false };
             if (new Date(response.expires_at) < new Date()) {
                 try {
-                    await getDB()`
-                        DELETE FROM tokens
-                        WHERE useruuid=${decode.useruuid} AND jti=${decode.jti} AND type=${type}
-                    `;
+                    await prisma.tokens.delete({ where: { jti: decode.jti } });
                 } catch (err) { if (process.env.LOG_ERRORS === 'true') console.error(err); }
 
                 return { success: false, message: "Token expired", authorized: false };

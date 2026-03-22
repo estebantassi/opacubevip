@@ -1,28 +1,19 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { ActionResult } from "../../../types/types";
 import { Token } from "../../token";
 import { deleteCachedValue } from "../../../lib/redis";
-import getDB from "../../../lib/db";
+import { ActionHandler } from "@server/handler";
 
-export const logout = async (): Promise<ActionResult> => {
+export const logout = ActionHandler({
+    requireAuth: true,
+    authType: Token.Type.refresh,
 
-    const tokenData = await Token.GetData((await cookies()).get("token_" + Token.Type.REFRESH.toLowerCase())?.value, Token.Type.REFRESH);
-    if (!tokenData.success) return tokenData;
+    handler: async ({ tx, auth }) => {
 
-    try {
-        await getDB()`
-            DELETE FROM tokens
-            WHERE useruuid=${tokenData.data.useruuid} AND jti=${tokenData.data.jti} AND type=${Token.Type.REFRESH}
-        `;
+        try { await tx.tokens.delete({ where: { jti: auth.jti } }); } catch (err) { if (process.env.LOG_ERRORS === 'true') console.error(err); }
 
-        deleteCachedValue(`${tokenData.data.useruuid}/tokens/${Token.Type.ACCESS}/${tokenData.data.accessjti}`);
+        try { deleteCachedValue(`${auth.useruuid}/tokens/${Token.Type.access}/${auth.accessjti}`); } catch (err) { if (process.env.LOG_ERRORS === 'true') console.error(err); }
 
         return { success: true, message: "Successfully logged out", data: null };
-    } catch (err) {
-        if (process.env.LOG_ERRORS === 'true') console.error(err);
-        return { success: false, message: "Internal server error" };
     }
-
-};
+});

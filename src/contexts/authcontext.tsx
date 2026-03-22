@@ -21,6 +21,7 @@ type AuthContextType = {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/* eslint-disable react-hooks/exhaustive-deps */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(() => {
         const cookie = Cookies.get("user");
@@ -63,9 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             AddToast(error ?? "Unknown error", "error");
         }
 
-    /* eslint-disable react-hooks/exhaustive-deps*/
     }, []);
-    /* eslint-enable react-hooks/exhaustive-deps*/
 
     const Logout = async () => {
         await logout();
