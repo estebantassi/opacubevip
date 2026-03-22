@@ -109,7 +109,7 @@ export async function GET(req: Request) {
                     await getBucket().file(`users/${request.uuid}/avatar`).save(avatar, {
                         metadata: {
                             contentType: 'image/webp',
-                            cacheControl: 'no-store'
+                            cacheControl: 'public, max-age=3600'
                         }
                     });
                 } catch (err) {
