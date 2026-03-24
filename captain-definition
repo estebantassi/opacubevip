@@ -6,6 +6,13 @@
     "COPY package*.json ./",
     "RUN npm install",
     "COPY . .",
+
+    "ARG NEXT_PUBLIC_TURNSTILE_KEY",
+    "ENV NEXT_PUBLIC_TURNSTILE_KEY=$NEXT_PUBLIC_TURNSTILE_KEY",
+
+    "ARG NEXT_PUBLIC_TURNSTILE",
+    "ENV NEXT_PUBLIC_TURNSTILE=$NEXT_PUBLIC_TURNSTILE",
+
     "RUN npx prisma generate",
     "RUN npm run build",
     "FROM node:24.14.0-alpine AS runner",
