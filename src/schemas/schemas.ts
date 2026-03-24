@@ -1,7 +1,5 @@
 import { z } from "zod";
-import { UUID } from "../types/types";
-
-
+import { UUID } from "@mytypes/types";
 
 export const UserProfileSchema = z
     .object({

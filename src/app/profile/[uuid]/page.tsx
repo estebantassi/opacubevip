@@ -1,8 +1,8 @@
 "use client";
 
-import { useAuth } from "../../../contexts/authcontext";
+import { useAuth } from "@contexts/authcontext";
 import Image from 'next/image'
-import { Button } from "../../../components/inputs";
+import { Button } from "@components/inputs";
 import { use, useEffect, useState } from 'react'
 import { User } from "src/types/types";
 import { APICall } from "@lib/api";

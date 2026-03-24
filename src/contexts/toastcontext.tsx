@@ -2,7 +2,7 @@
 
 import { createContext, use, useRef, useState, type ReactNode } from "react";
 import { Toast } from "../components/toast";
-import type { ToastContent, ToastType } from "../types/toast/types";
+import type { ToastContent, ToastType } from "@mytypes/toast/types";
 
 type ToastContextType = {
     AddToast: (text: string, type?: ToastType, duration?: number) => void;

@@ -4,11 +4,11 @@ import { createContext, use, useEffect, useState, type ReactNode } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useToast } from "./toastcontext";
-import type { ActionResult, User } from "../types/types";
-import { logout } from "../server/auth/refresh/logout";
-import { updateAccess } from "../server/auth/refresh/updateaccess";
+import type { ActionResult, User } from "@mytypes/types";
+import { logout } from "@server/auth/refresh/logout";
+import { updateAccess } from "@server/auth/refresh/updateaccess";
 import z from "zod";
-import { validateSchema } from "../lib/tools";
+import { validateSchema } from "@lib/tools";
 
 type AuthContextType = {
     user: User | null;

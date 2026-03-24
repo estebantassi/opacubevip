@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { Email } from "../../types/types";
-import { SRPEphemeral, SRPProof } from "../../types/srp/types";
+import { Email, TurnstileToken } from "@mytypes/types";
+import { SRPEphemeral, SRPProof } from "@mytypes/srp/types";
 
-export const LoginStartSchema = z.object({ email: Email })
+export const LoginStartSchema = z.object({ email: Email, turnstileToken: TurnstileToken })
 export type LoginStartInput = z.infer<typeof LoginStartSchema>;
 
 export const LoginSchema = z.object({ email: Email, srpProof: SRPProof, srpEphemeral: SRPEphemeral })

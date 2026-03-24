@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "./inputs";
+import { Button } from "@components/inputs";
 
 export default function OAuth() {
 

@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input } from "../../components/inputs";
-import { RegisterFormInput, RegisterFormSchema, RegisterSchema, VerifySchema } from "../../schemas/register/schemas";
+import { Button, Input } from "@components/inputs";
+import { RegisterFormInput, RegisterFormSchema, RegisterSchema, VerifySchema } from "@schemas/register/schemas";
 
 import srp from "secure-remote-password/client";
-import { useToast } from "../../contexts/toastcontext";
-import { register } from "../../server/auth/register";
-import { APICall } from "../../lib/api";
-import { verify } from "../../server/auth/verify/verify";
+import { useToast } from "@contexts/toastcontext";
+import { register } from "@server/auth/register";
+import { APICall } from "@lib/api";
+import { verify } from "@server/auth/verify/verify";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../contexts/authcontext";
-import OAuth from "../../components/oauth";
+import { useAuth } from "@contexts/authcontext";
+import OAuth from "@components/oauth";
 import Link from "next/link";
+import Turnstile, { useTurnstile } from "react-turnstile";
+import { TurnstileEnabled, TurnstileKey } from "@lib/env";
 
 export default function Register() {
+    const turnstile = useTurnstile();
+    const [turnstileToken, setTurnstileToken] = useState("");
 
     const { AddToast } = useToast();
     const { setUser } = useAuth();
@@ -25,6 +29,7 @@ export default function Register() {
         emailcheck: { value: "", valid: false },
         password: { value: "", valid: false },
         passwordcheck: { value: "", valid: false },
+        turnstileToken: { value: turnstileToken, valid: false },
     });
 
     const [showCodeForm, setShowCodeForm] = useState(false);
@@ -41,7 +46,10 @@ export default function Register() {
 
         const values = Object.fromEntries(Object.entries(registerFormData).map(([k, v]) => [k, v.value]));
         const input = RegisterFormSchema.safeParse(values as RegisterFormInput);
-        if (!input.success) return setError(input.error.issues[0]?.message ?? "Invalid input");
+        if (!input.success) {
+            turnstile?.reset();
+            return setError(input.error.issues[0]?.message ?? "Invalid input");
+        }
 
         const srpSalt = srp.generateSalt();
         const srpPrivatekey = srp.derivePrivateKey(srpSalt, registerFormData.email.value, registerFormData.password.value);
@@ -53,9 +61,13 @@ export default function Register() {
             emailcheck: registerFormData.emailcheck.value,
             username: registerFormData.username.value,
             srpSalt: srpSalt,
-            srpVerifier: srpVerifier
+            srpVerifier: srpVerifier,
+            turnstileToken
         }, RegisterSchema);
-        if (!registerRequest.success) return AddToast(registerRequest.message, "error");
+        if (!registerRequest.success) {
+            turnstile?.reset();
+            return AddToast(registerRequest.message, "error");
+        }
 
         setShowCodeForm(true);
     }
@@ -97,6 +109,14 @@ export default function Register() {
                         <Input placeholder="Email verification" className='w-full lg:w-[50%] sm:w-[75%]' type="email" value={registerFormData.emailcheck.value} onChange={(e, valid) => setRegisterFormData(prev => ({ ...prev, emailcheck: { value: e.target.value, valid } }))} />
                         <Input placeholder="Password" className='w-full lg:w-[50%] sm:w-[75%]' type="password" value={registerFormData.password.value} onChange={(e, valid) => setRegisterFormData(prev => ({ ...prev, password: { value: e.target.value, valid } }))} />
                         <Input placeholder="Password verification" className='w-full lg:w-[50%] sm:w-[75%]' type="password" value={registerFormData.passwordcheck.value} onChange={(e, valid) => setRegisterFormData(prev => ({ ...prev, passwordcheck: { value: e.target.value, valid } }))} />
+                        
+                        {TurnstileEnabled && <Turnstile
+                            sitekey={TurnstileKey}
+                            onVerify={(token) => {
+                                setTurnstileToken(token);
+                            }}
+                        />}
+                        
                         <p className='text-red-500'>{error || "\u00A0"}</p>
 
                         <Button disabled={!isFormValid} type="submit" style="main">Register</Button>

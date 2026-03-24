@@ -4,7 +4,11 @@
         "paths": {
       "@lib/*": ["src/lib/*"],
       "@server/*": ["src/server/*"],
-      "@prisma/*": ["generated/prisma/*"]
+      "@prisma/*": ["prisma/generated/*"],
+      "@mytypes/*": ["src/types/*"],
+      "@schemas/*": ["src/schemas/*"],
+      "@components/*": ["src/components/*"],
+      "@contexts/*": ["src/contexts/*"]
     },
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],

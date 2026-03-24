@@ -1,5 +1,5 @@
-import { getBucket } from "./gcs";
-import { getCachedValue, setCachedValue, deleteCachedValue } from "../redis";
+import { getBucket } from "@lib/gcs/gcs";
+import { getCachedValue, setCachedValue, deleteCachedValue } from "@lib/redis";
 import { GetSignedUrlConfig } from "@google-cloud/storage";
 
 export const GetImage = async (filepath: string) => {

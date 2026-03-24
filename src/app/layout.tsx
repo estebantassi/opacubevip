@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-import { ToastProvider } from "../contexts/toastcontext";
-import Navbar from "../components/navbar";
-import { AuthProvider } from "../contexts/authcontext";
+import { ToastProvider } from "@contexts/toastcontext";
+import Navbar from "@components/navbar";
+import { AuthProvider } from "@contexts/authcontext";
 import { Suspense } from "react";
-import Footer from "../components/footer";
+import Footer from "@components/footer";
 
 export const metadata: Metadata = {
   title: "OpacubeVIP",

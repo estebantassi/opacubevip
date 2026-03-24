@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { Code, Email, Password, Username } from "../../types/types";
-import { SRPSalt, SRPVerifier } from "../../types/srp/types";
+import { Code, Email, Password, TurnstileToken, Username } from "@mytypes/types";
+import { SRPSalt, SRPVerifier } from "@mytypes/srp/types";
 
 export const RegisterSchema = z
     .object({
@@ -8,7 +8,8 @@ export const RegisterSchema = z
         email: Email,
         emailcheck: Email,
         srpSalt: SRPSalt,
-        srpVerifier: SRPVerifier
+        srpVerifier: SRPVerifier,
+        turnstileToken: TurnstileToken
     })
     .refine((data) => data.email === data.emailcheck, {
         message: "Emails don't match",
@@ -21,7 +22,8 @@ export const RegisterFormSchema = z
         email: Email,
         emailcheck: Email,
         password: Password,
-        passwordcheck: Password
+        passwordcheck: Password,
+        turnstileToken: TurnstileToken
     })
     .refine((data) => data.email === data.emailcheck, {
         message: "Emails don't match",

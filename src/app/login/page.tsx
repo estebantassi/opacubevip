@@ -1,19 +1,23 @@
 "use client";
 
-import { Button, Input } from "../../components/inputs";
-import { login, loginStart } from "../../server/auth/login";
-import { LoginSchema, LoginStartSchema } from "../../schemas/login/schemas";
+import { Button, Input } from "@components/inputs";
+import { login, loginStart } from "@server/auth/login";
+import { LoginSchema, LoginStartSchema } from "@schemas/login/schemas";
 import { useState } from "react";
-import { useToast } from "../../contexts/toastcontext";
+import { useToast } from "@contexts/toastcontext";
 import srp from "secure-remote-password/client";
-import { useAuth } from "../../contexts/authcontext";
+import { useAuth } from "@contexts/authcontext";
 import { useRouter } from "next/navigation";
-import { APICall } from "../../lib/api";
-import { validateSchema } from "../../lib/tools";
-import OAuth from "../../components/oauth";
+import { APICall } from "@lib/api";
+import { validateSchema } from "@lib/tools";
+import OAuth from "@components/oauth";
 import Link from "next/link";
+import Turnstile, { useTurnstile } from "react-turnstile";
+import { TurnstileEnabled, TurnstileKey } from "@lib/env";
 
 export default function Login() {
+    const turnstile = useTurnstile();
+    const [turnstileToken, setTurnstileToken] = useState("");
 
     const [loginFormData, setLoginFormData] = useState({
         email: { value: "", valid: false },
@@ -29,15 +33,22 @@ export default function Login() {
 
     const router = useRouter();
 
+
     async function Login(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
 
         //rare case of manually checking input, because we need the error to be shown.
-        const input = validateSchema({ email: loginFormData.email.value}, LoginStartSchema);
-        if (!input.success) return setError(input.message);
+        const input = validateSchema({ email: loginFormData.email.value, turnstileToken}, LoginStartSchema);
+        if (!input.success) {
+            turnstile?.reset();
+            return setError(input.message);
+        }
         
-        const fetchSRP = await APICall(loginStart, { email: loginFormData.email.value }, LoginStartSchema);
-        if (!fetchSRP.success) return AddToast(fetchSRP.message, "error");
+        const fetchSRP = await APICall(loginStart, { email: loginFormData.email.value, turnstileToken }, LoginStartSchema);
+        if (!fetchSRP.success) {
+            turnstile?.reset();
+            return AddToast(fetchSRP.message, "error");
+        }
 
         const srpSalt = fetchSRP.data.srpSalt;
         const srpServerEphemeral = fetchSRP.data.srpServerEphemeral;
@@ -47,9 +58,13 @@ export default function Login() {
         const srpClientSession = srp.deriveSession(srpClientEphemeral.secret, srpServerEphemeral, srpSalt, loginFormData.email.value, srpPrivateKey);
 
         const loginRequest = await APICall(login, {email: input.data.email, srpProof: srpClientSession.proof, srpEphemeral: srpClientEphemeral.public }, LoginSchema);
-        if (!loginRequest.success) return AddToast(loginRequest.message, "error");
+        if (!loginRequest.success) {
+            turnstile?.reset();
+            return AddToast(loginRequest.message, "error");
+        }
 
         try { srp.verifySession(srpClientEphemeral.public, srpClientSession, loginRequest.data.srpProof); } catch {
+            turnstile?.reset();
             return AddToast("There was an error verifying the server's authenticity", "error");
         }
 
@@ -70,6 +85,14 @@ export default function Login() {
 
                     <Input placeholder="Email" className='w-full lg:w-[50%] sm:w-[75%]' type="email" value={loginFormData.email.value} onChange={(e, valid) => setLoginFormData(prev => ({ ...prev, email: { value: e.target.value, valid } }))} />
                     <Input validate={false} placeholder="Password" className='w-full lg:w-[50%] sm:w-[75%]' type="password" value={loginFormData.password.value} onChange={(e, valid) => setLoginFormData(prev => ({ ...prev, password: { value: e.target.value, valid } }))} />
+
+                    {TurnstileEnabled && <Turnstile
+                        sitekey={TurnstileKey}
+                        onVerify={(token) => {
+                            setTurnstileToken(token);
+                        }}
+                    />}
+
                     <p className='text-red-500'>{error || "\u00A0"}</p>
 
                     <Button disabled={!isFormValid} type="submit" style="main">Login</Button>

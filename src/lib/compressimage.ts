@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { ActionResult } from "../types/types";
+import { ActionResult } from "@mytypes/types";
 
 const LOG_ERRORS = Boolean(process.env.LOG_ERRORS === "true");
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@lib/prisma";
-import { ActionHandler } from "../handler";
+import { ActionHandler } from "@server/handler";
 
 export const test = ActionHandler({
     requireAuth: false,

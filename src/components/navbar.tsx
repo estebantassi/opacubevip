@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "../contexts/authcontext";
+import { useAuth } from "@contexts/authcontext";
 
 export default function Navbar() {
     

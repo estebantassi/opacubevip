@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 import z from "zod";
-import { ActionResult } from "../types/types";
+import { ActionResult } from "@mytypes/types";
 
 export function validateSchema<TInput>(input: TInput | null, schema?: z.ZodType<TInput> | null): ActionResult<TInput> {
     let validatedInput: TInput;

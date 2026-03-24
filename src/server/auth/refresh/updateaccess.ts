@@ -1,7 +1,7 @@
 "use server";
 
-import { Token } from "../../token";
-import { deleteCachedValue } from "../../../lib/redis";
+import { Token } from "@server/token";
+import { deleteCachedValue } from "@lib/redis";
 import { ActionHandler } from "@server/handler";
 
 export const updateAccess = ActionHandler({

@@ -1,6 +1,6 @@
 import { CircleX, CircleCheck, CircleAlert, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { ToastContent } from "../types/toast/types";
+import type { ToastContent } from "@mytypes/toast/types";
 
 export const Toast = ({ text, type, duration }: ToastContent) => {
 

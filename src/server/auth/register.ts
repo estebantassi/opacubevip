@@ -1,12 +1,12 @@
 "use server";
 
-import { setCachedValue } from "../../lib/redis";
-import { encrypt } from "../../lib/tools";
-import { RegisterInput, RegisterSchema } from "../../schemas/register/schemas";
-import { ActionHandler } from "../handler";
+import { setCachedValue } from "@lib/redis";
+import { encrypt } from "@lib/tools";
+import { RegisterInput, RegisterSchema } from "@schemas/register/schemas";
+import { ActionHandler } from "@server/handler";
 import crypto from "crypto";
-import { Token } from "../token";
-import getTransporter from "../../lib/mailer";
+import { Token } from "@server/token";
+import getTransporter from "@lib/mailer";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 const EMAIL_ENCRYPTION_SECRET_VERSION = String(process.env.EMAIL_ENCRYPTION_SECRET_VERSION);
@@ -16,9 +16,9 @@ const SECURITY_EMAIL = process.env.SECURITY_EMAIL;
 export const register = ActionHandler<RegisterInput>({
     schema: RegisterSchema,
     transaction: true,
+    turnstile: true,
 
     handler: async ({ input, tx }) => {
-
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
         const emailEncrypted = EMAIL_ENCRYPTION_SECRET_VERSION + ":" + encrypt(input.email, EMAIL_ENCRYPTION_SECRET);
 

@@ -1,3 +1,4 @@
+import { TurnstileEnabled } from "@lib/env";
 import { z } from "zod";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -24,6 +25,14 @@ export const Password = z
 export const Code = z
     .string()
     .length(6, { message: "Code must be 6 characters" })
+
+export const TurnstileToken = z
+    .string()
+    .refine((v) => { if (!TurnstileEnabled) return true; return v !== ""; }, { message: "Turnstile is required" })
+
+export type WithTurnstile = {
+  turnstileToken: string;
+};
 
 export type ActionResult<T = unknown> = { success: true; data: T; message: string } | { success: false; message: string; authorized?: boolean; };
 

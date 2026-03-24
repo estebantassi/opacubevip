@@ -2,14 +2,14 @@
 
 import crypto from "crypto";
 
-import { LoginInput, LoginSchema, LoginStartInput, LoginStartSchema } from "../../schemas/login/schemas";
-import { Token } from "../token";
+import { LoginInput, LoginSchema, LoginStartInput, LoginStartSchema } from "@schemas/login/schemas";
+import { Token } from "@server/token";
 import srp from "secure-remote-password/server";
-import { deleteCachedValue, getCachedValue, setCachedValue } from "../../lib/redis";
+import { deleteCachedValue, getCachedValue, setCachedValue } from "@lib/redis";
 
 import { cookies } from "next/headers";
-import { GetImage } from "../../lib/gcs/images";
-import { ActionHandler } from "../handler";
+import { GetImage } from "@lib/gcs/images";
+import { ActionHandler } from "@server/handler";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 
@@ -20,9 +20,9 @@ type LoginStartReturnType = {
 
 export const loginStart = ActionHandler<LoginStartInput, LoginStartReturnType>({
     schema: LoginStartSchema,
+    turnstile: true,
 
     handler: async ({ input, tx }) => {
-
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
 
         const request = await tx.users.findUnique({

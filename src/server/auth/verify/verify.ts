@@ -1,10 +1,10 @@
 "use server";
 
-import { GetImage } from "../../../lib/gcs/images";
-import { deleteCachedValue } from "../../../lib/redis";
-import { VerifyInput, VerifySchema } from "../../../schemas/register/schemas";
-import { ActionHandler } from "../../handler";
-import { Token } from "../../token";
+import { GetImage } from "@lib/gcs/images";
+import { deleteCachedValue } from "@lib/redis";
+import { VerifyInput, VerifySchema } from "@schemas/register/schemas";
+import { ActionHandler } from "@server/handler";
+import { Token } from "@server/token";
 
 type VerifyReturnType = {
     user: {

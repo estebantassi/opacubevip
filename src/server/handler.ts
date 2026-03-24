@@ -1,15 +1,17 @@
 import z from "zod";
-import { ActionResult } from "../types/types";
-import { Token, TokenContent } from "./token";
+import { ActionResult, WithTurnstile } from "@mytypes/types";
+import { Token, TokenContent } from "@server/token";
 import { cookies } from "next/headers";
 import { prisma, DB } from "@lib/prisma";
 import { token_type } from "@prisma/enums";
+import { ValidateTurnstile } from "@lib/turnstile";
 
 type HandlerOptions<TInput, TOutput> = {
     schema?: z.ZodType<TInput>;
     requireAuth?: boolean;
     authType?: token_type;
     transaction?: boolean;
+    turnstile?: boolean;
     handler: (ctx: {
         input: TInput;
         auth: TokenContent;
@@ -20,6 +22,11 @@ type HandlerOptions<TInput, TOutput> = {
 export function ActionHandler<TInput, TOutput = unknown>(options:  HandlerOptions<TInput, TOutput>) {
     return async (input?: TInput): Promise<ActionResult<TOutput>> => {
         try {
+            if (options.turnstile) {
+                const { turnstileToken } = input as TInput & WithTurnstile;
+                const turnstile = await ValidateTurnstile(turnstileToken);
+                if (!turnstile) return { success: false, message: "Invalid turnstile" };
+            }
 
             //check input
             let validatedInput: TInput;

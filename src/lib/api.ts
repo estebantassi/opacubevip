@@ -1,6 +1,6 @@
 import z from "zod";
-import { ActionResult } from "../types/types";
-import { validateSchema } from "./tools";
+import { ActionResult } from "@mytypes/types";
+import { validateSchema } from "@lib/tools";
 
 export async function APICall<TInput, TOutput>(fn: (input: TInput) => Promise<ActionResult<TOutput>>, input: TInput | null, schema: z.ZodType<TInput> | null): Promise<ActionResult<TOutput>> {
     try {

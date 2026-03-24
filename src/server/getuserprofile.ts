@@ -1,10 +1,10 @@
 "use server";
 
-import { GetImage } from "../lib/gcs/images";
+import { GetImage } from "@lib/gcs/images";
 
-import { UserProfileInput, UserProfileSchema } from "../schemas/schemas";
-import { User } from "../types/types";
-import { ActionHandler } from "./handler";
+import { UserProfileInput, UserProfileSchema } from "@schemas/schemas";
+import { User } from "@mytypes/types";
+import { ActionHandler } from "@server/handler";
 
 export const getUserProfile = ActionHandler<UserProfileInput, User>({
     schema: UserProfileSchema,

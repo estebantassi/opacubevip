@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import { getCachedValue, setCachedValue } from "../lib/redis";
+import { getCachedValue, setCachedValue } from "@lib/redis";
 import { cookies } from "next/headers";
-import { ActionResult } from "../types/types";
+import { ActionResult } from "@mytypes/types";
 import { DB, prisma } from "@lib/prisma";
 import { token_type } from "@prisma/enums";
 

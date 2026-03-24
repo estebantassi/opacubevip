@@ -1,6 +1,6 @@
 import { useState } from "react";
 import z from "zod";
-import { Code, Email, Password, Username } from "../types/types";
+import { Code, Email, Password, Username } from "@mytypes/types";
 import { Info } from 'lucide-react';
 import {
     useFloating,
