@@ -3,10 +3,12 @@
 import { Token } from "@server/token";
 import { deleteCachedValue } from "@lib/redis";
 import { ActionHandler } from "@server/handler";
+import { ratelimiters } from "@server/ratelimiters";
 
 export const logout = ActionHandler({
     requireAuth: true,
     authType: Token.Type.refresh,
+    ratelimiter: ratelimiters.logout,
 
     handler: async ({ tx, auth }) => {
 

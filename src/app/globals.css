@@ -3,5 +3,91 @@
 @theme {
   --color-background: #636363;
   --color-content: #222222;
+  --color-textprimary: #ffffff;
   --color-accent: #3b3b3b;
+  
+  --color-highlightcontent: #00ff0049;
+  --color-subtle: #00000018;
+  --color-borderprimary: #ffffff;
+
+}
+
+/* Wine */
+/* @theme {
+  --color-background: #140f12;
+  --color-content: #1f161a;
+  --color-textprimary: #f1e9ec;
+  --color-accent: #c08497;
+} */
+
+/* Dark Brown */
+/* @theme {
+  --color-background: #14110f;
+  --color-content: #1f1a17;
+  --color-textprimary: #f3eee8;
+  --color-accent: #d4a373;
+} */
+
+/* Orange-brown */
+/* @theme {
+  --color-background: #3f2f2b;
+  --color-content: #4c3934;
+  --color-textprimary: #f3e9e6;
+  --color-accent: #e29a7f;
+} */
+
+
+@layer base {
+  label { @apply cursor-text; }
+  h1 { @apply text-4xl font-bold tracking-tight leading-tight; }
+  h2 { @apply text-3xl font-semibold tracking-tight leading-tight mt-8; }
+  h3 { @apply text-2xl font-semibold leading-snug mt-6; }
+
+  p { @apply text-base; }
+}
+
+.spinner {
+  border-top: 3px solid white;
+  border-right: 3px solid transparent;
+  animation: rotation 1s linear infinite;
+}
+
+
+@keyframes rgb-text {
+  0%   { color: hsl(0 100% 60%); }
+  33%  { color: hsl(120 100% 60%); }
+  66%  { color: hsl(240 100% 60%); }
+  100% { color: hsl(360 100% 60%); }
+}
+
+.rgb-text {
+  animation: rgb-text 3s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+::-webkit-scrollbar {
+  border-radius: 10px;
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: white;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
 }

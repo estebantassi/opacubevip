@@ -3,14 +3,14 @@ import { ActionResult } from "@mytypes/types";
 
 const LOG_ERRORS = Boolean(process.env.LOG_ERRORS === "true");
 
-const maxAvatarSize = Number(process.env.AVATAR_MAXSIZE);
-const maxAvatarFileSize = Number(process.env.AVATAR_MAXFSIZE);
+const maxAvatarSize = 300;
+const maxAvatarFileSize = 2;
 
-const maxBannerSize = Number(process.env.BANNER_MAXSIZE);
-const maxBannerFileSize = Number(process.env.BANNER_MAXFSIZE);
+const maxBannerSize = 900;
+const maxBannerFileSize = 2;
 
-const maxDefaultSize = Number(process.env.DEFAULTIMAGE_MAXSIZE);
-const maxDefaultFileSize = Number(process.env.DEFAULTIMAGE_MAXFSIZE);
+const maxDefaultSize = 1000;
+const maxDefaultFileSize = 2;
 
 export const compressImage = async (image: ArrayBuffer, type: "avatar" | "banner" | "" = "") : Promise<ActionResult<Buffer<ArrayBufferLike>>> => {
 
@@ -82,7 +82,7 @@ export const compressImage = async (image: ArrayBuffer, type: "avatar" | "banner
             .webp({ quality })
             .toBuffer();
 
-        while (output.length > maxFileSize * 1024 && quality > 10) {
+        while (output.length > maxFileSize * 1024 * 1024 && quality > 10) {
             quality -= 5;
             output = await buffer
                 .resize({
@@ -94,7 +94,7 @@ export const compressImage = async (image: ArrayBuffer, type: "avatar" | "banner
                 .toBuffer();
         }
 
-        if (output.length > maxFileSize * 1024) return { success: false, message: "File size exceeds " + maxFileSize + "KB" };
+        if (output.length > maxFileSize * 1024 * 1024) return { success: false, message: "File size exceeds " + maxFileSize + "MB" };
 
         return { success: true, data: output, message: "Successfully compressed image" };
     } catch (err) {

@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import { getCachedValue, setCachedValue } from "@lib/redis";
 import { cookies } from "next/headers";
-import { ActionResult } from "@mytypes/types";
+import { ActionResult, User } from "@mytypes/types";
 import { DB, prisma } from "@lib/prisma";
 import { token_type } from "@prisma/enums";
 
@@ -17,7 +17,9 @@ export type TokenContent = {
     jti: string,
     storagetype: TokenStorageType,
     step: number | null,
-    accessjti: string | null
+    accessjti: string | null,
+    user: User | null,
+    admin: boolean,
 }
 
 export class Token {
@@ -31,7 +33,7 @@ export class Token {
     public duration: number;
     public version: number;
 
-    constructor(useruuid: string, type: token_type, storagetype: TokenStorageType, step: number | null = null, accessjti: string | null = null) {
+    constructor(useruuid: string, type: token_type, storagetype: TokenStorageType, step: number | null = null, accessjti: string | null = null, user: User | null = null, admin: boolean = false) {
         const jti = crypto.randomUUID();
 
         this.version = Number(process.env['TOKEN_SECRET_' + type.toUpperCase() + '_VERSION']);
@@ -41,7 +43,9 @@ export class Token {
             jti,
             storagetype,
             step,
-            accessjti
+            accessjti,
+            user,
+            admin
         }
 
         this.exp = new Date(Date.now() + this.duration);
@@ -58,7 +62,6 @@ export class Token {
                 await database.tokens.create({
                     data: {
                         useruuid: this.content.useruuid,
-                        type: this.type,
                         jti: this.content.jti,
                         expires_at: this.exp,
                     },
@@ -69,7 +72,6 @@ export class Token {
                 name: "token_" + this.type,
                 value: this.version + ":" + this.token,
                 httpOnly: true,
-                path: "api/auth/" + this.type,
                 sameSite: "strict",
                 secure: process.env.SECURE === "true",
                 maxAge: this.duration / 1000,

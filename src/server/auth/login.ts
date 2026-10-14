@@ -7,11 +7,12 @@ import { Token } from "@server/token";
 import srp from "secure-remote-password/server";
 import { deleteCachedValue, getCachedValue, setCachedValue } from "@lib/redis";
 
-import { cookies } from "next/headers";
-import { GetImage } from "@lib/gcs/images";
 import { ActionHandler } from "@server/handler";
+import { User } from "@mytypes/types";
+import { ratelimiters } from "@server/ratelimiters";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
+const GOOGLEBUCKETPUBLICURL = String(process.env.GOOGLE_BUCKET_PUBLIC_URL);
 
 type LoginStartReturnType = {
     srpSalt: string,
@@ -21,6 +22,7 @@ type LoginStartReturnType = {
 export const loginStart = ActionHandler<LoginStartInput, LoginStartReturnType>({
     schema: LoginStartSchema,
     turnstile: true,
+    ratelimiter: ratelimiters.loginstart,
 
     handler: async ({ input, tx }) => {
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
@@ -52,21 +54,18 @@ export const loginStart = ActionHandler<LoginStartInput, LoginStartReturnType>({
 
 type LoginReturnType = {
     srpProof: string,
-    user: {
-        avatar: string,
-        uuid: string,
-        username: string
-    }
+    user: User
 }
 
 export const login = ActionHandler<LoginInput, LoginReturnType>({
     schema: LoginSchema,
+    ratelimiter: ratelimiters.login,
+    requireAuth: true,
+    authType: "login",
 
-    handler: async ({ input, tx }) => {
+    handler: async ({ input, tx, auth }) => {
 
-        const tokenData = await Token.GetData((await cookies()).get("token_" + Token.Type.login)?.value, Token.Type.login);
-        if (!tokenData.success) return tokenData;
-        if (tokenData.data.step != 0) return { success: false, message: "Invalid token step" }
+        if (auth.step != 0) return { success: false, message: "Invalid token step" }
 
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
 
@@ -77,7 +76,11 @@ export const login = ActionHandler<LoginInput, LoginReturnType>({
                 srp_salt: true,
                 uuid: true,
                 username: true,
-                avatar: true,
+                handle: true,
+                avatar_version: true,
+                banner_version: true,
+                biography: true,
+                admin: true,
             },
         });
         if (!request) return { success: false, message: "User not found" };
@@ -93,25 +96,52 @@ export const login = ActionHandler<LoginInput, LoginReturnType>({
         } catch { return { success: false, message: "Wrong password" }; }
         if (!srpServerSession || !srpServerSession.proof) { return { success: false, message: "Wrong password" }; }
 
-        const avatarURL = request.avatar ? `users/${request.uuid}/avatar` : `Default/avatar`;
-        const avatar = await GetImage(avatarURL);
-        if (!avatar) return { success: false, message: "Error fetching avatar" };
+        const avatarURL = request.avatar_version ? `users/${request.uuid}/avatar?v=${request.avatar_version}` : `Default/avatar`;
+        const avatar = `${GOOGLEBUCKETPUBLICURL}${avatarURL}`;
+        const bannerURL = request.banner_version ? `users/${request.uuid}/banner?v=${request.banner_version}` : `Default/banner`;
+        const banner = `${GOOGLEBUCKETPUBLICURL}${bannerURL}`;
 
-        const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE);
+        const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE, null, null, null, request.admin);
         if (!await accessToken.Save()) return { success: false, message: "Error creating a token" };
 
-        const refreshToken = new Token(request.uuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti);
+        const refreshToken = new Token(request.uuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti, null, request.admin);
         if (!await refreshToken.Save()) return { success: false, message: "Error creating a token" };
 
         Token.Remove("token_" + Token.Type.login);
-        deleteCachedValue(`${request.uuid}/tokens/${Token.Type.login}/${tokenData.data.jti}`);
+        deleteCachedValue(`${request.uuid}/tokens/${Token.Type.login}/${auth.jti}`);
 
-        const user = {
+        const user : User = {
+            handle: request.handle,
             avatar,
             uuid: request.uuid,
-            username: request.username
+            username: request.username,
+            banner,
+            biography: request.biography,
+            admin: request.admin,
         }
 
         return { success: true, message: "Successfully logged in", data: { user, srpProof: srpServerSession.proof } };
+    }
+});
+
+export const oauthlogin = ActionHandler<null, User>({
+    ratelimiter: ratelimiters.oauthlogin,
+    requireAuth: true,
+    authType: Token.Type.oauthlogin,
+
+    handler: async ({ auth }) => {
+        const user = auth.user;
+        if (!user) return { success: false, message: "User data not present inside the token" };
+
+        const accessToken = new Token(auth.useruuid, Token.Type.access, Token.StorageType.CACHE, null, null, null, auth.admin);
+        if (!await accessToken.Save()) return { success: false, message: "Error creating a token" };
+
+        const refreshToken = new Token(auth.useruuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti, null, auth.admin);
+        if (!await refreshToken.Save()) return { success: false, message: "Error creating a token" };
+
+        Token.Remove("token_" + Token.Type.oauthlogin);
+        deleteCachedValue(`${auth.useruuid}/tokens/${Token.Type.oauthlogin}/${auth.jti}`);
+
+        return { success: true, message: "Successfully logged in", data: user };
     }
 });

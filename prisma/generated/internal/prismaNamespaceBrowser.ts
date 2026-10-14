@@ -52,7 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   tokens: 'tokens',
-  users: 'users'
+  users: 'users',
+  audio_logs: 'audio_logs'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -74,7 +75,6 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const TokensScalarFieldEnum = {
   jti: 'jti',
   useruuid: 'useruuid',
-  type: 'type',
   expires_at: 'expires_at'
 } as const
 
@@ -88,13 +88,26 @@ export const UsersScalarFieldEnum = {
   auth_method: 'auth_method',
   encrypted_email: 'encrypted_email',
   username: 'username',
-  avatar: 'avatar',
   srp_salt: 'srp_salt',
   srp_verifier: 'srp_verifier',
-  verified: 'verified'
+  verified: 'verified',
+  handle: 'handle',
+  avatar_version: 'avatar_version',
+  banner_version: 'banner_version',
+  biography: 'biography',
+  admin: 'admin'
 } as const
 
 export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
+
+
+export const Audio_logsScalarFieldEnum = {
+  uuid: 'uuid',
+  language: 'language',
+  text: 'text'
+} as const
+
+export type Audio_logsScalarFieldEnum = (typeof Audio_logsScalarFieldEnum)[keyof typeof Audio_logsScalarFieldEnum]
 
 
 export const SortOrder = {

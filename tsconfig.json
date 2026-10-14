@@ -8,7 +8,8 @@
       "@mytypes/*": ["src/types/*"],
       "@schemas/*": ["src/schemas/*"],
       "@components/*": ["src/components/*"],
-      "@contexts/*": ["src/contexts/*"]
+      "@contexts/*": ["src/contexts/*"],
+      "@tools/*": ["src/tools/*"]
     },
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],

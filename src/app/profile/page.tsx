@@ -11,7 +11,7 @@ export default function Profile() {
     const router = useRouter();
 
     useEffect(()=> {
-        if (user) router.push(`/profile/${user.uuid}`);
+        if (user) router.push(`/profile/${user.handle}`);
         else router.push("/home");
     }, []);
 

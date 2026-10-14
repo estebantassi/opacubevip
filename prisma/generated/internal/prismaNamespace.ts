@@ -80,12 +80,12 @@ export type PrismaVersion = {
 }
 
 /**
- * Prisma Client JS version: 7.5.0
- * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
+ * Prisma Client JS version: 7.7.0
+ * Query Engine version: 75cbdc1eb7150937890ad5465d861175c6624711
  */
 export const prismaVersion: PrismaVersion = {
-  client: "7.5.0",
-  engine: "280c870be64f457428992c43c1f6d557fab6e29e"
+  client: "7.7.0",
+  engine: "75cbdc1eb7150937890ad5465d861175c6624711"
 }
 
 /**
@@ -385,7 +385,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   tokens: 'tokens',
-  users: 'users'
+  users: 'users',
+  audio_logs: 'audio_logs'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -401,7 +402,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tokens" | "users"
+    modelProps: "tokens" | "users" | "audio_logs"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -553,6 +554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    audio_logs: {
+      payload: Prisma.$audio_logsPayload<ExtArgs>
+      fields: Prisma.audio_logsFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.audio_logsFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.audio_logsFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>
+        }
+        findFirst: {
+          args: Prisma.audio_logsFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.audio_logsFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>
+        }
+        findMany: {
+          args: Prisma.audio_logsFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>[]
+        }
+        create: {
+          args: Prisma.audio_logsCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>
+        }
+        createMany: {
+          args: Prisma.audio_logsCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.audio_logsCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>[]
+        }
+        delete: {
+          args: Prisma.audio_logsDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>
+        }
+        update: {
+          args: Prisma.audio_logsUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>
+        }
+        deleteMany: {
+          args: Prisma.audio_logsDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.audio_logsUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.audio_logsUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>[]
+        }
+        upsert: {
+          args: Prisma.audio_logsUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$audio_logsPayload>
+        }
+        aggregate: {
+          args: Prisma.Audio_logsAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAudio_logs>
+        }
+        groupBy: {
+          args: Prisma.audio_logsGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Audio_logsGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.audio_logsCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.Audio_logsCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -595,7 +670,6 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const TokensScalarFieldEnum = {
   jti: 'jti',
   useruuid: 'useruuid',
-  type: 'type',
   expires_at: 'expires_at'
 } as const
 
@@ -609,13 +683,26 @@ export const UsersScalarFieldEnum = {
   auth_method: 'auth_method',
   encrypted_email: 'encrypted_email',
   username: 'username',
-  avatar: 'avatar',
   srp_salt: 'srp_salt',
   srp_verifier: 'srp_verifier',
-  verified: 'verified'
+  verified: 'verified',
+  handle: 'handle',
+  avatar_version: 'avatar_version',
+  banner_version: 'banner_version',
+  biography: 'biography',
+  admin: 'admin'
 } as const
 
 export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
+
+
+export const Audio_logsScalarFieldEnum = {
+  uuid: 'uuid',
+  language: 'language',
+  text: 'text'
+} as const
+
+export type Audio_logsScalarFieldEnum = (typeof Audio_logsScalarFieldEnum)[keyof typeof Audio_logsScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -663,20 +750,6 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
- * Reference to a field of type 'token_type'
- */
-export type Enumtoken_typeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'token_type'>
-    
-
-
-/**
- * Reference to a field of type 'token_type[]'
- */
-export type ListEnumtoken_typeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'token_type[]'>
-    
-
-
-/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -708,6 +781,20 @@ export type ListEnumauth_typeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
+ * Reference to a field of type 'languages'
+ */
+export type EnumlanguagesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'languages'>
+    
+
+
+/**
+ * Reference to a field of type 'languages[]'
+ */
+export type ListEnumlanguagesFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'languages[]'>
     
 
 
@@ -821,6 +908,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   tokens?: Prisma.tokensOmit
   users?: Prisma.usersOmit
+  audio_logs?: Prisma.audio_logsOmit
 }
 
 /* Types for Logging */

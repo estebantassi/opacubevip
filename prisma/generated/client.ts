@@ -51,3 +51,8 @@ export type tokens = Prisma.tokensModel
  * 
  */
 export type users = Prisma.usersModel
+/**
+ * Model audio_logs
+ * 
+ */
+export type audio_logs = Prisma.audio_logsModel

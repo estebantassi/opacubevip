@@ -1,35 +1,29 @@
 "use client";
 
-import { createContext, use, useEffect, useState, type ReactNode } from "react";
+import { createContext, Dispatch, SetStateAction, use, useEffect, useState, type ReactNode } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { useToast } from "./toastcontext";
 import type { ActionResult, User } from "@mytypes/types";
-import { logout } from "@server/auth/refresh/logout";
-import { updateAccess } from "@server/auth/refresh/updateaccess";
+import { logout } from "@server/auth/logout";
+import { updateAccess } from "@server/auth/updateaccess";
 import z from "zod";
 import { validateSchema } from "@lib/tools";
 
 type AuthContextType = {
     user: User | null;
-    avatar: string | null;
-    setAvatar: React.Dispatch<React.SetStateAction<string | null>>;
-    setUser: React.Dispatch<React.SetStateAction<User | null>>;
+    isUserReady: boolean;
+    setUser: Dispatch<SetStateAction<User | null>>;
     Logout: () => Promise<void>;
     APICallAuth: <TInput, TOutput>(fn: (input: TInput) => Promise<ActionResult<TOutput>>, input: TInput | null, schema: z.ZodType<TInput> | null ) => Promise<ActionResult<TOutput>>;
 };
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/* eslint-disable react-hooks/exhaustive-deps */
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(() => {
-        const cookie = Cookies.get("user");
-        if (!cookie) return null;
-        try { return JSON.parse(cookie) as User; } catch { return null; }
-    });
-    const [avatar, setAvatar] = useState<string | null>(null);
-    useEffect(() => { setAvatar(user ? localStorage.getItem(`avatar-${user.uuid}`) : null); }, [user]);
+    const [user, setUser] = useState<User | null>(null);
+    const [isUserReady, setIsUserReady] = useState(false);
 
     const router = useRouter();
 
@@ -46,33 +40,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
         }
     }, [user])
-    
+
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const status = params.get("oauth");
-        const error = params.get("error");
+        const cookie = Cookies.get("user");
 
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, '', cleanUrl);
-
-        if (status == 'success') {
-            const cookie = Cookies.get("user");
-            if (!cookie) return AddToast("Error grabbing user cookie", "error");;
-            setUser(JSON.parse(cookie) as User);
-            AddToast("Successfully logged in", "success");
-        } else if (status == 'error') {
-            AddToast(error ?? "Unknown error", "error");
+        if (!cookie) {
+            /* eslint-disable-next-line react-hooks/set-state-in-effect */
+            setUser(null);
+            setIsUserReady(true);
+            return;
         }
 
+        try { setUser(JSON.parse(cookie)); } catch { setUser(null); }
+
+        setIsUserReady(true);
     }, []);
 
     const Logout = async () => {
         await logout();
 
+        setUser(null);
         Cookies.remove("user");
         router.push("/home");
-
-        setUser(null);
 
         AddToast("You have been logged out", "info");
     };
@@ -98,13 +87,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }
 
-    const [mounted, setMounted] = useState(false); useEffect(() => { setMounted(true) }, []); if (!mounted) return null;
-
     return (
         <AuthContext value={{
+            isUserReady,
             user,
-            avatar,
-            setAvatar,
             setUser,
             Logout,
             APICallAuth

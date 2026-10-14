@@ -5,9 +5,9 @@ export default function PrivacyPolicy() {
     return (
         <>
             <div className="flex justify-center">
-                <div className="text-sm lg:text-base sm:rounded-xl p-10 bg-content flex flex-col gap-5 sm:m-4 lg:w-[50vw] sm:w-[75vw] w-full items-center [&>*]:w-full [&>h2]:text-lg lg:[&>h2]:text-2xl [&>h2]:font-bold">
+                <div className="sm:rounded-xl p-10 bg-content flex flex-col gap-5 sm:m-4 lg:w-[50vw] sm:w-[75vw] w-full items-center [&>*]:w-full">
 
-                    <h1 className="text-3xl lg:text-5xl font-bold">Privacy Policy</h1>
+                    <h1>Privacy Policy</h1>
 
                     <h2>1. Data Controller</h2>
 

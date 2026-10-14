@@ -31,10 +31,14 @@ export type UsersMinAggregateOutputType = {
   auth_method: $Enums.auth_type | null
   encrypted_email: string | null
   username: string | null
-  avatar: boolean | null
   srp_salt: string | null
   srp_verifier: string | null
   verified: boolean | null
+  handle: string | null
+  avatar_version: string | null
+  banner_version: string | null
+  biography: string | null
+  admin: boolean | null
 }
 
 export type UsersMaxAggregateOutputType = {
@@ -44,10 +48,14 @@ export type UsersMaxAggregateOutputType = {
   auth_method: $Enums.auth_type | null
   encrypted_email: string | null
   username: string | null
-  avatar: boolean | null
   srp_salt: string | null
   srp_verifier: string | null
   verified: boolean | null
+  handle: string | null
+  avatar_version: string | null
+  banner_version: string | null
+  biography: string | null
+  admin: boolean | null
 }
 
 export type UsersCountAggregateOutputType = {
@@ -57,10 +65,14 @@ export type UsersCountAggregateOutputType = {
   auth_method: number
   encrypted_email: number
   username: number
-  avatar: number
   srp_salt: number
   srp_verifier: number
   verified: number
+  handle: number
+  avatar_version: number
+  banner_version: number
+  biography: number
+  admin: number
   _all: number
 }
 
@@ -72,10 +84,14 @@ export type UsersMinAggregateInputType = {
   auth_method?: true
   encrypted_email?: true
   username?: true
-  avatar?: true
   srp_salt?: true
   srp_verifier?: true
   verified?: true
+  handle?: true
+  avatar_version?: true
+  banner_version?: true
+  biography?: true
+  admin?: true
 }
 
 export type UsersMaxAggregateInputType = {
@@ -85,10 +101,14 @@ export type UsersMaxAggregateInputType = {
   auth_method?: true
   encrypted_email?: true
   username?: true
-  avatar?: true
   srp_salt?: true
   srp_verifier?: true
   verified?: true
+  handle?: true
+  avatar_version?: true
+  banner_version?: true
+  biography?: true
+  admin?: true
 }
 
 export type UsersCountAggregateInputType = {
@@ -98,10 +118,14 @@ export type UsersCountAggregateInputType = {
   auth_method?: true
   encrypted_email?: true
   username?: true
-  avatar?: true
   srp_salt?: true
   srp_verifier?: true
   verified?: true
+  handle?: true
+  avatar_version?: true
+  banner_version?: true
+  biography?: true
+  admin?: true
   _all?: true
 }
 
@@ -184,16 +208,20 @@ export type UsersGroupByOutputType = {
   auth_method: $Enums.auth_type
   encrypted_email: string
   username: string
-  avatar: boolean
   srp_salt: string | null
   srp_verifier: string | null
   verified: boolean
+  handle: string
+  avatar_version: string | null
+  banner_version: string | null
+  biography: string
+  admin: boolean
   _count: UsersCountAggregateOutputType | null
   _min: UsersMinAggregateOutputType | null
   _max: UsersMaxAggregateOutputType | null
 }
 
-type GetUsersGroupByPayload<T extends usersGroupByArgs> = Prisma.PrismaPromise<
+export type GetUsersGroupByPayload<T extends usersGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<UsersGroupByOutputType, T['by']> &
       {
@@ -218,10 +246,14 @@ export type usersWhereInput = {
   auth_method?: Prisma.Enumauth_typeFilter<"users"> | $Enums.auth_type
   encrypted_email?: Prisma.StringFilter<"users"> | string
   username?: Prisma.StringFilter<"users"> | string
-  avatar?: Prisma.BoolFilter<"users"> | boolean
   srp_salt?: Prisma.StringNullableFilter<"users"> | string | null
   srp_verifier?: Prisma.StringNullableFilter<"users"> | string | null
   verified?: Prisma.BoolFilter<"users"> | boolean
+  handle?: Prisma.StringFilter<"users"> | string
+  avatar_version?: Prisma.UuidNullableFilter<"users"> | string | null
+  banner_version?: Prisma.UuidNullableFilter<"users"> | string | null
+  biography?: Prisma.StringFilter<"users"> | string
+  admin?: Prisma.BoolFilter<"users"> | boolean
   tokens?: Prisma.TokensListRelationFilter
 }
 
@@ -232,16 +264,21 @@ export type usersOrderByWithRelationInput = {
   auth_method?: Prisma.SortOrder
   encrypted_email?: Prisma.SortOrder
   username?: Prisma.SortOrder
-  avatar?: Prisma.SortOrder
   srp_salt?: Prisma.SortOrderInput | Prisma.SortOrder
   srp_verifier?: Prisma.SortOrderInput | Prisma.SortOrder
   verified?: Prisma.SortOrder
+  handle?: Prisma.SortOrder
+  avatar_version?: Prisma.SortOrderInput | Prisma.SortOrder
+  banner_version?: Prisma.SortOrderInput | Prisma.SortOrder
+  biography?: Prisma.SortOrder
+  admin?: Prisma.SortOrder
   tokens?: Prisma.tokensOrderByRelationAggregateInput
 }
 
 export type usersWhereUniqueInput = Prisma.AtLeast<{
   uuid?: string
   hashed_email?: string
+  handle?: string
   AND?: Prisma.usersWhereInput | Prisma.usersWhereInput[]
   OR?: Prisma.usersWhereInput[]
   NOT?: Prisma.usersWhereInput | Prisma.usersWhereInput[]
@@ -249,12 +286,15 @@ export type usersWhereUniqueInput = Prisma.AtLeast<{
   auth_method?: Prisma.Enumauth_typeFilter<"users"> | $Enums.auth_type
   encrypted_email?: Prisma.StringFilter<"users"> | string
   username?: Prisma.StringFilter<"users"> | string
-  avatar?: Prisma.BoolFilter<"users"> | boolean
   srp_salt?: Prisma.StringNullableFilter<"users"> | string | null
   srp_verifier?: Prisma.StringNullableFilter<"users"> | string | null
   verified?: Prisma.BoolFilter<"users"> | boolean
+  avatar_version?: Prisma.UuidNullableFilter<"users"> | string | null
+  banner_version?: Prisma.UuidNullableFilter<"users"> | string | null
+  biography?: Prisma.StringFilter<"users"> | string
+  admin?: Prisma.BoolFilter<"users"> | boolean
   tokens?: Prisma.TokensListRelationFilter
-}, "uuid" | "uuid" | "hashed_email">
+}, "uuid" | "uuid" | "hashed_email" | "handle">
 
 export type usersOrderByWithAggregationInput = {
   uuid?: Prisma.SortOrder
@@ -263,10 +303,14 @@ export type usersOrderByWithAggregationInput = {
   auth_method?: Prisma.SortOrder
   encrypted_email?: Prisma.SortOrder
   username?: Prisma.SortOrder
-  avatar?: Prisma.SortOrder
   srp_salt?: Prisma.SortOrderInput | Prisma.SortOrder
   srp_verifier?: Prisma.SortOrderInput | Prisma.SortOrder
   verified?: Prisma.SortOrder
+  handle?: Prisma.SortOrder
+  avatar_version?: Prisma.SortOrderInput | Prisma.SortOrder
+  banner_version?: Prisma.SortOrderInput | Prisma.SortOrder
+  biography?: Prisma.SortOrder
+  admin?: Prisma.SortOrder
   _count?: Prisma.usersCountOrderByAggregateInput
   _max?: Prisma.usersMaxOrderByAggregateInput
   _min?: Prisma.usersMinOrderByAggregateInput
@@ -282,10 +326,14 @@ export type usersScalarWhereWithAggregatesInput = {
   auth_method?: Prisma.Enumauth_typeWithAggregatesFilter<"users"> | $Enums.auth_type
   encrypted_email?: Prisma.StringWithAggregatesFilter<"users"> | string
   username?: Prisma.StringWithAggregatesFilter<"users"> | string
-  avatar?: Prisma.BoolWithAggregatesFilter<"users"> | boolean
   srp_salt?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
   srp_verifier?: Prisma.StringNullableWithAggregatesFilter<"users"> | string | null
   verified?: Prisma.BoolWithAggregatesFilter<"users"> | boolean
+  handle?: Prisma.StringWithAggregatesFilter<"users"> | string
+  avatar_version?: Prisma.UuidNullableWithAggregatesFilter<"users"> | string | null
+  banner_version?: Prisma.UuidNullableWithAggregatesFilter<"users"> | string | null
+  biography?: Prisma.StringWithAggregatesFilter<"users"> | string
+  admin?: Prisma.BoolWithAggregatesFilter<"users"> | boolean
 }
 
 export type usersCreateInput = {
@@ -295,10 +343,14 @@ export type usersCreateInput = {
   auth_method: $Enums.auth_type
   encrypted_email: string
   username: string
-  avatar?: boolean
   srp_salt?: string | null
   srp_verifier?: string | null
   verified?: boolean
+  handle?: string
+  avatar_version?: string | null
+  banner_version?: string | null
+  biography?: string
+  admin?: boolean
   tokens?: Prisma.tokensCreateNestedManyWithoutUsersInput
 }
 
@@ -309,10 +361,14 @@ export type usersUncheckedCreateInput = {
   auth_method: $Enums.auth_type
   encrypted_email: string
   username: string
-  avatar?: boolean
   srp_salt?: string | null
   srp_verifier?: string | null
   verified?: boolean
+  handle?: string
+  avatar_version?: string | null
+  banner_version?: string | null
+  biography?: string
+  admin?: boolean
   tokens?: Prisma.tokensUncheckedCreateNestedManyWithoutUsersInput
 }
 
@@ -323,10 +379,14 @@ export type usersUpdateInput = {
   auth_method?: Prisma.Enumauth_typeFieldUpdateOperationsInput | $Enums.auth_type
   encrypted_email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.BoolFieldUpdateOperationsInput | boolean
   srp_salt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   srp_verifier?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  admin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokens?: Prisma.tokensUpdateManyWithoutUsersNestedInput
 }
 
@@ -337,10 +397,14 @@ export type usersUncheckedUpdateInput = {
   auth_method?: Prisma.Enumauth_typeFieldUpdateOperationsInput | $Enums.auth_type
   encrypted_email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.BoolFieldUpdateOperationsInput | boolean
   srp_salt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   srp_verifier?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  admin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokens?: Prisma.tokensUncheckedUpdateManyWithoutUsersNestedInput
 }
 
@@ -351,10 +415,14 @@ export type usersCreateManyInput = {
   auth_method: $Enums.auth_type
   encrypted_email: string
   username: string
-  avatar?: boolean
   srp_salt?: string | null
   srp_verifier?: string | null
   verified?: boolean
+  handle?: string
+  avatar_version?: string | null
+  banner_version?: string | null
+  biography?: string
+  admin?: boolean
 }
 
 export type usersUpdateManyMutationInput = {
@@ -364,10 +432,14 @@ export type usersUpdateManyMutationInput = {
   auth_method?: Prisma.Enumauth_typeFieldUpdateOperationsInput | $Enums.auth_type
   encrypted_email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.BoolFieldUpdateOperationsInput | boolean
   srp_salt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   srp_verifier?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  admin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type usersUncheckedUpdateManyInput = {
@@ -377,10 +449,14 @@ export type usersUncheckedUpdateManyInput = {
   auth_method?: Prisma.Enumauth_typeFieldUpdateOperationsInput | $Enums.auth_type
   encrypted_email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.BoolFieldUpdateOperationsInput | boolean
   srp_salt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   srp_verifier?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  admin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type UsersScalarRelationFilter = {
@@ -395,10 +471,14 @@ export type usersCountOrderByAggregateInput = {
   auth_method?: Prisma.SortOrder
   encrypted_email?: Prisma.SortOrder
   username?: Prisma.SortOrder
-  avatar?: Prisma.SortOrder
   srp_salt?: Prisma.SortOrder
   srp_verifier?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  handle?: Prisma.SortOrder
+  avatar_version?: Prisma.SortOrder
+  banner_version?: Prisma.SortOrder
+  biography?: Prisma.SortOrder
+  admin?: Prisma.SortOrder
 }
 
 export type usersMaxOrderByAggregateInput = {
@@ -408,10 +488,14 @@ export type usersMaxOrderByAggregateInput = {
   auth_method?: Prisma.SortOrder
   encrypted_email?: Prisma.SortOrder
   username?: Prisma.SortOrder
-  avatar?: Prisma.SortOrder
   srp_salt?: Prisma.SortOrder
   srp_verifier?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  handle?: Prisma.SortOrder
+  avatar_version?: Prisma.SortOrder
+  banner_version?: Prisma.SortOrder
+  biography?: Prisma.SortOrder
+  admin?: Prisma.SortOrder
 }
 
 export type usersMinOrderByAggregateInput = {
@@ -421,10 +505,14 @@ export type usersMinOrderByAggregateInput = {
   auth_method?: Prisma.SortOrder
   encrypted_email?: Prisma.SortOrder
   username?: Prisma.SortOrder
-  avatar?: Prisma.SortOrder
   srp_salt?: Prisma.SortOrder
   srp_verifier?: Prisma.SortOrder
   verified?: Prisma.SortOrder
+  handle?: Prisma.SortOrder
+  avatar_version?: Prisma.SortOrder
+  banner_version?: Prisma.SortOrder
+  biography?: Prisma.SortOrder
+  admin?: Prisma.SortOrder
 }
 
 export type usersCreateNestedOneWithoutTokensInput = {
@@ -445,12 +533,12 @@ export type Enumauth_typeFieldUpdateOperationsInput = {
   set?: $Enums.auth_type
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type usersCreateWithoutTokensInput = {
@@ -460,10 +548,14 @@ export type usersCreateWithoutTokensInput = {
   auth_method: $Enums.auth_type
   encrypted_email: string
   username: string
-  avatar?: boolean
   srp_salt?: string | null
   srp_verifier?: string | null
   verified?: boolean
+  handle?: string
+  avatar_version?: string | null
+  banner_version?: string | null
+  biography?: string
+  admin?: boolean
 }
 
 export type usersUncheckedCreateWithoutTokensInput = {
@@ -473,10 +565,14 @@ export type usersUncheckedCreateWithoutTokensInput = {
   auth_method: $Enums.auth_type
   encrypted_email: string
   username: string
-  avatar?: boolean
   srp_salt?: string | null
   srp_verifier?: string | null
   verified?: boolean
+  handle?: string
+  avatar_version?: string | null
+  banner_version?: string | null
+  biography?: string
+  admin?: boolean
 }
 
 export type usersCreateOrConnectWithoutTokensInput = {
@@ -502,10 +598,14 @@ export type usersUpdateWithoutTokensInput = {
   auth_method?: Prisma.Enumauth_typeFieldUpdateOperationsInput | $Enums.auth_type
   encrypted_email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.BoolFieldUpdateOperationsInput | boolean
   srp_salt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   srp_verifier?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  admin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type usersUncheckedUpdateWithoutTokensInput = {
@@ -515,10 +615,14 @@ export type usersUncheckedUpdateWithoutTokensInput = {
   auth_method?: Prisma.Enumauth_typeFieldUpdateOperationsInput | $Enums.auth_type
   encrypted_email?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
-  avatar?: Prisma.BoolFieldUpdateOperationsInput | boolean
   srp_salt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   srp_verifier?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   verified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  handle?: Prisma.StringFieldUpdateOperationsInput | string
+  avatar_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  banner_version?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  admin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -559,10 +663,14 @@ export type usersSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   auth_method?: boolean
   encrypted_email?: boolean
   username?: boolean
-  avatar?: boolean
   srp_salt?: boolean
   srp_verifier?: boolean
   verified?: boolean
+  handle?: boolean
+  avatar_version?: boolean
+  banner_version?: boolean
+  biography?: boolean
+  admin?: boolean
   tokens?: boolean | Prisma.users$tokensArgs<ExtArgs>
   _count?: boolean | Prisma.UsersCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["users"]>
@@ -574,10 +682,14 @@ export type usersSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   auth_method?: boolean
   encrypted_email?: boolean
   username?: boolean
-  avatar?: boolean
   srp_salt?: boolean
   srp_verifier?: boolean
   verified?: boolean
+  handle?: boolean
+  avatar_version?: boolean
+  banner_version?: boolean
+  biography?: boolean
+  admin?: boolean
 }, ExtArgs["result"]["users"]>
 
 export type usersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -587,10 +699,14 @@ export type usersSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   auth_method?: boolean
   encrypted_email?: boolean
   username?: boolean
-  avatar?: boolean
   srp_salt?: boolean
   srp_verifier?: boolean
   verified?: boolean
+  handle?: boolean
+  avatar_version?: boolean
+  banner_version?: boolean
+  biography?: boolean
+  admin?: boolean
 }, ExtArgs["result"]["users"]>
 
 export type usersSelectScalar = {
@@ -600,13 +716,17 @@ export type usersSelectScalar = {
   auth_method?: boolean
   encrypted_email?: boolean
   username?: boolean
-  avatar?: boolean
   srp_salt?: boolean
   srp_verifier?: boolean
   verified?: boolean
+  handle?: boolean
+  avatar_version?: boolean
+  banner_version?: boolean
+  biography?: boolean
+  admin?: boolean
 }
 
-export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uuid" | "created_at" | "hashed_email" | "auth_method" | "encrypted_email" | "username" | "avatar" | "srp_salt" | "srp_verifier" | "verified", ExtArgs["result"]["users"]>
+export type usersOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"uuid" | "created_at" | "hashed_email" | "auth_method" | "encrypted_email" | "username" | "srp_salt" | "srp_verifier" | "verified" | "handle" | "avatar_version" | "banner_version" | "biography" | "admin", ExtArgs["result"]["users"]>
 export type usersInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tokens?: boolean | Prisma.users$tokensArgs<ExtArgs>
   _count?: boolean | Prisma.UsersCountOutputTypeDefaultArgs<ExtArgs>
@@ -626,10 +746,14 @@ export type $usersPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     auth_method: $Enums.auth_type
     encrypted_email: string
     username: string
-    avatar: boolean
     srp_salt: string | null
     srp_verifier: string | null
     verified: boolean
+    handle: string
+    avatar_version: string | null
+    banner_version: string | null
+    biography: string
+    admin: boolean
   }, ExtArgs["result"]["users"]>
   composites: {}
 }
@@ -1060,10 +1184,14 @@ export interface usersFieldRefs {
   readonly auth_method: Prisma.FieldRef<"users", 'auth_type'>
   readonly encrypted_email: Prisma.FieldRef<"users", 'String'>
   readonly username: Prisma.FieldRef<"users", 'String'>
-  readonly avatar: Prisma.FieldRef<"users", 'Boolean'>
   readonly srp_salt: Prisma.FieldRef<"users", 'String'>
   readonly srp_verifier: Prisma.FieldRef<"users", 'String'>
   readonly verified: Prisma.FieldRef<"users", 'Boolean'>
+  readonly handle: Prisma.FieldRef<"users", 'String'>
+  readonly avatar_version: Prisma.FieldRef<"users", 'String'>
+  readonly banner_version: Prisma.FieldRef<"users", 'String'>
+  readonly biography: Prisma.FieldRef<"users", 'String'>
+  readonly admin: Prisma.FieldRef<"users", 'Boolean'>
 }
     
 

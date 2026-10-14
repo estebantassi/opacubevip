@@ -6,6 +6,9 @@ import Navbar from "@components/navbar";
 import { AuthProvider } from "@contexts/authcontext";
 import { Suspense } from "react";
 import Footer from "@components/footer";
+import { AudioProvider } from "@contexts/audiocontext";
+import { ImageViewerProvider } from "@contexts/imageviewercontext";
+import { ModalProvider } from "@contexts/modalcontext";
 
 export const metadata: Metadata = {
   title: "OpacubeVIP",
@@ -20,20 +23,27 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <body className={`bg-background text-white`}>
+      <body className={`bg-background text-textprimary`}>
 
         <Suspense>
-          <ToastProvider>
-            <AuthProvider>
-              <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-1">
-                  {children}
-                </main>
-                <Footer />
-              </div>
-            </AuthProvider>
-          </ToastProvider>
+          <ModalProvider>
+            <ImageViewerProvider>
+              <ToastProvider>
+                <AuthProvider>
+                  <AudioProvider>
+                    <div className="min-h-screen flex flex-col">
+                      <Navbar type="top" />
+                      <main className="flex-1">
+                        {children}
+                      </main>
+                      <Footer />
+                      <Navbar type="bottom" />
+                    </div>
+                  </AudioProvider>
+                </AuthProvider>
+              </ToastProvider>
+            </ImageViewerProvider>
+          </ModalProvider>
         </Suspense>
 
 

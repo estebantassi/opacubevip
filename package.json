@@ -10,6 +10,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@floating-ui/react-dom": "^2.1.7",
     "@google-cloud/storage": "^5.18.3",
     "@prisma/adapter-pg": "^7.5.0",
@@ -29,12 +31,17 @@
     "pg": "^8.20.0",
     "postgres": "^3.4.7",
     "qs": "^6.15.0",
+    "rate-limiter-flexible": "^11.0.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-easy-crop": "^5.5.7",
+    "react-select": "^5.10.2",
+    "react-textarea-autosize": "^8.5.9",
     "react-turnstile": "^1.1.5",
     "redis": "^5.11.0",
     "secure-remote-password": "^0.3.1",
     "sharp": "^0.34.5",
+    "uuid": "^13.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

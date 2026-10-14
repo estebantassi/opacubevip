@@ -1,6 +1,6 @@
 import { useState } from "react";
 import z from "zod";
-import { Code, Email, Password, Username } from "@mytypes/types";
+import { Biography, BiographyMaxLength, Code, Email, Password, Handle, Username } from "@mytypes/types";
 import { Info } from 'lucide-react';
 import {
     useFloating,
@@ -10,16 +10,21 @@ import {
     shift,
 } from "@floating-ui/react-dom";
 
+import TextareaAutosize from 'react-textarea-autosize';
+
 type InputContent = {
     validate?: boolean;
     placeholder?: string;
-    type?: "email" | "username" | "password" | "text" | "code";
+    type?: "email" | "username" | "password" | "text" | "code" | "handle" | "biography" | "textarea";
     value?: string;
     className?: string;
-    onChange?: (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>, valid: boolean) => void;
+    style?: "none" | "default";
+    textarealength?: number;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement, HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement, HTMLTextAreaElement>, valid: boolean) => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 };
 
-export const Input = ({ validate = false, placeholder = "", type = "text", value = "", className = "", onChange }: InputContent) => {
+export const Input = ({ validate = false, placeholder = "", type = "text", value = "", className = "", onChange, onKeyDown, style = "default", textarealength = 500 }: InputContent) => {
 
     const [error, setError] = useState<string | null>(null);
     const [show, setShow] = useState(false);
@@ -34,7 +39,12 @@ export const Input = ({ validate = false, placeholder = "", type = "text", value
         whileElementsMounted: autoUpdate,
     });
 
-    async function handleChange(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+    const styles = {
+        "none": "rounded-lg",
+        "default": "rounded-lg p-2 bg-accent"
+    }
+
+    async function handleChange(e: React.ChangeEvent<HTMLInputElement, HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement, HTMLTextAreaElement>) {
         if (!validate) if (onChange) onChange(e, true);
 
         let schema: z.ZodType | null = null;
@@ -51,6 +61,12 @@ export const Input = ({ validate = false, placeholder = "", type = "text", value
             case "code":
                 schema = Code;
                 break;
+            case "handle":
+                schema = Handle;
+                break;
+            case "biography":
+                schema = Biography;
+                break;
             default:
                 if (onChange) onChange(e, true);
                 return;
@@ -65,9 +81,22 @@ export const Input = ({ validate = false, placeholder = "", type = "text", value
 
     return (
         <>
-            <div className={`${className} relative m-2`}>
-                <input placeholder={placeholder} value={value} onChange={(e) => handleChange(e)} type={type === "password" ? "password" : "text"} className={`w-full rounded-lg p-2 ${error ? 'pr-10 outline outline-red-500' : 'outline-none'} bg-accent`} />
-
+            <div className={`${className} relative`}>
+                {type === "biography" || type === "textarea" ? 
+                    <>
+                        <TextareaAutosize placeholder={placeholder} value={value} onChange={(e) => 
+                            handleChange(e)
+                        } className={`resize-none w-full rounded-lg p-2 ${error ? 'pr-10 outline outline-red-500' : 'outline-none'} bg-accent`}>
+                            
+                        </TextareaAutosize>
+                        <div className="w-full text-right">
+                            <div>{`${value.length}/${type === "biography" ? BiographyMaxLength : textarealength}`}</div>
+                        </div>
+                    </>
+                    :
+                    <input className={`${styles[style]} w-full ${error ? 'pr-10 outline outline-red-500' : 'outline-none'}`} onKeyDown={(e) => { if (onKeyDown) onKeyDown(e)}} placeholder={placeholder} value={value} onChange={(e) => handleChange(e)} type={type === "password" ? "password" : "text"} />
+                }
+                
                 {error && <Info
                     ref={refs.setReference}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-red-500 hover:cursor-pointer"
@@ -92,7 +121,7 @@ export const Input = ({ validate = false, placeholder = "", type = "text", value
 
 type ButtonContent = {
     disabled?: boolean;
-    style?: "none" | "main" | "danger";
+    style?: "none" | "main" | "danger" | "accept";
     type?: undefined | "button" | "submit" | "reset";
     className?: string;
     children?: React.ReactNode;
@@ -105,6 +134,7 @@ export const Button = ({ disabled = false, children, onClick, style = "none", ty
 		"none": "",
 		"main": `bg-black`,
 		"danger": `bg-red-500 text-white`,
+        "accept": "bg-green-700 text-white"
 	};
 
 	return (

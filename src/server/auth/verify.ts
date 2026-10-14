@@ -1,24 +1,24 @@
 "use server";
 
-import { GetImage } from "@lib/gcs/images";
 import { deleteCachedValue } from "@lib/redis";
+import { User } from "@mytypes/types";
 import { VerifyInput, VerifySchema } from "@schemas/register/schemas";
 import { ActionHandler } from "@server/handler";
+import { ratelimiters } from "@server/ratelimiters";
 import { Token } from "@server/token";
 
 type VerifyReturnType = {
-    user: {
-        avatar: string,
-        uuid: string,
-        username: string
-    }
+    user: User
 }
+
+const GOOGLEBUCKETPUBLICURL = String(process.env.GOOGLE_BUCKET_PUBLIC_URL);
 
 export const verify = ActionHandler<VerifyInput, VerifyReturnType>({
     schema: VerifySchema,
     transaction: true,
     requireAuth: true,
     authType: Token.Type.verify,
+    ratelimiter: ratelimiters.verify,
 
     handler: async ({ input, tx, auth }) => {
 
@@ -30,14 +30,16 @@ export const verify = ActionHandler<VerifyInput, VerifyReturnType>({
                 select: {
                 uuid: true,
                 username: true,
-                avatar: true
+                handle: true,
+                biography: true,
+                admin: true,
             }
         });
+
         if (!request) return { success: false, message: "User not found" };
 
-        const avatarURL = request.avatar ? `users/${request.uuid}/avatar` : `Default/avatar`;
-        const avatar = await GetImage(avatarURL);
-        if (!avatar) return { success: false, message: "Error fetching avatar" };
+        const avatar = `${GOOGLEBUCKETPUBLICURL}Default/avatar`;
+        const banner = `${GOOGLEBUCKETPUBLICURL}Default/banner`;
 
         const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE);
         if (!await accessToken.Save(tx)) return { success: false, message: "Error creating a token" };
@@ -48,10 +50,14 @@ export const verify = ActionHandler<VerifyInput, VerifyReturnType>({
         Token.Remove("token_" + Token.Type.verify);
         deleteCachedValue(`${request.uuid}/signup/codes/${input.code}`);
 
-        const user = {
+        const user: User = {
+            handle: request.handle,
             avatar,
             uuid: request.uuid,
-            username: request.username
+            username: request.username,
+            banner,
+            biography: request.biography,
+            admin: request.admin
         }
 
         return { success: true, message: "Successfully created an account", data: { user } };

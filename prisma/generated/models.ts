@@ -10,4 +10,5 @@
  */
 export type * from './models/tokens'
 export type * from './models/users'
+export type * from './models/audio_logs'
 export type * from './commonInputTypes'

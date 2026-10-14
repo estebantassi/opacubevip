@@ -3,19 +3,19 @@ export const runtime = 'nodejs';
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { cookies } from "next/headers";
-import { GetGoogleUser } from "@lib/oauth/getuser/google";
 import { encrypt } from "@lib/tools";
 import axios from "axios";
 import { compressImage } from "@lib/compressimage";
 import { Token } from "@server/token";
-import { getBucket } from "@lib/gcs/gcs";
+import { getBucket } from "@lib/gcs";
 import { ActionResult, User } from "@mytypes/types";
-import { GetImage } from "@lib/gcs/images";
+import { GetGoogleUser } from "@lib/oauth/getuser/google";
 import { GetDiscordUser } from "@lib/oauth/getuser/discord";
 import { GetGitlabUser } from "@lib/oauth/getuser/gitlab";
 import { GetTwitchUser } from "@lib/oauth/getuser/twitch";
 import { GetGithubUser } from "@lib/oauth/getuser/github";
 import { prisma } from "@lib/prisma";
+import { v7 as uuidv7 } from 'uuid';
 
 const LOG_ERRORS = Boolean(process.env.LOG_ERRORS === "true");
 
@@ -26,10 +26,14 @@ const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 const EMAIL_ENCRYPTION_SECRET_VERSION = String(process.env.EMAIL_ENCRYPTION_SECRET_VERSION);
 const EMAIL_ENCRYPTION_SECRET = String(process.env['EMAIL_ENCRYPTION_SECRET_V' + EMAIL_ENCRYPTION_SECRET_VERSION]);
 
+const GOOGLEBUCKETPUBLICURL = String(process.env.GOOGLE_BUCKET_PUBLIC_URL);
+
 export async function GET(req: Request) {
+    //Add rate limiting here
+
     const url = new URL(req.url);
 
-    const errorURL = CLIENT_URL + `/login?oauth=error&error=`;
+    const errorURL = CLIENT_URL + `/oauth?oauth=error&error=`;
     const cookieStore = await cookies();
 
     const state = url.searchParams.get("state");
@@ -78,6 +82,7 @@ export async function GET(req: Request) {
     const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(user.email).digest('hex');
     const emailEncrypted = EMAIL_ENCRYPTION_SECRET_VERSION + ":" + encrypt(user.email, EMAIL_ENCRYPTION_SECRET);
 
+    let oauthlogintoken: Token | undefined;
     try {
         let avatar: Buffer<ArrayBufferLike> | null;
         if (user.avatarURL) {
@@ -86,59 +91,68 @@ export async function GET(req: Request) {
             avatar = compressedAvatar.success ? compressedAvatar.data : null;
         }
 
-        const finalUser = await prisma.$transaction(async (tx) => {
-            const [request] = await tx.$queryRaw<{ uuid: string; username: string; auth_method: string; avatar: boolean; inserted: boolean }[]>`
-                INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, avatar)
-                VALUES (${new Date().toISOString()}, ${emailHash}, ${emailEncrypted}, ${providerPretty}, ${user.username}, ${avatar != null})
+        await prisma.$transaction(async (tx) => {
+            const images_version = uuidv7();
+            const avatar_version = avatar != null ? images_version : null;
+            const [request] = await tx.$queryRaw<{ handle: string; uuid: string; username: string; auth_method: string; banner_version: string; avatar_version: string | null; biography: string; admin: boolean; inserted: boolean }[]>`
+                INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, avatar_version)
+                VALUES (${new Date().toISOString()}, ${emailHash}, ${emailEncrypted}, ${providerPretty}, ${user.username}, ${avatar_version})
                 ON CONFLICT (hashed_email)
                 DO UPDATE SET hashed_email = users.hashed_email
-                RETURNING uuid, username, auth_method, avatar, (xmax = 0) AS inserted;
+                RETURNING handle, uuid, username, auth_method, banner_version, avatar_version, biography, admin, (xmax = 0) AS inserted;
             `;
             if (!request) throw { success: false, message: "Error creating user" };
 
             if (providerPretty != request.auth_method) throw { success: false, message: `You already have an account associated with this email using another service ('${request.auth_method}')` };
 
-            const accessToken = new Token(request.uuid, Token.Type.access, Token.StorageType.CACHE);
-            if (!await accessToken.Save(tx)) throw { success: false, message: "Error creating a token" };
-
-            const refreshToken = new Token(request.uuid, Token.Type.refresh, Token.StorageType.BOTH, null, accessToken.content.jti);
-            if (!await refreshToken.Save(tx)) throw { success: false, message: "Error creating a token" };
-
+            let avatarPath = avatar ? `users/${request.uuid}/avatar?v=${request.avatar_version}` : `Default/avatar`;
             if (request.inserted && avatar) {
                 try {
                     await getBucket().file(`users/${request.uuid}/avatar`).save(avatar, {
                         metadata: {
                             contentType: 'image/webp',
-                            cacheControl: 'public, max-age=3600'
+                            cacheControl: 'public, max-age=3600',
+                                metadata: {
+                                version: images_version,
+                            },
                         }
                     });
                 } catch (err) {
                     if (LOG_ERRORS) console.error(err);
                     throw { success: false, message: "Error with Google Cloud Storage" };
                 }
+                avatarPath = `users/${request.uuid}/avatar?v=${images_version}`;
             }
-
-            const avatarPath = avatar ? `users/${request.uuid}/avatar` : `Default/avatar`;
-            const avatarURL = await GetImage(avatarPath);
-            if (!avatarURL) throw { success: false, message: "Error fetching avatar" };
+            
+            const avatarURL = `${GOOGLEBUCKETPUBLICURL}${avatarPath}`;
+            const bannerPath = request.banner_version ? `users/${request.uuid}/banner?v=${request.banner_version}` : `Default/banner`;
+            const bannerURL = `${GOOGLEBUCKETPUBLICURL}${bannerPath}`;
 
             const userToReturn: User = {
+                handle: request.handle,
                 uuid: request.uuid,
                 username: request.username,
-                avatar: avatarURL
+                avatar: avatarURL,
+                banner: bannerURL,
+                biography: request.biography,
+                admin: request.admin,
             };
 
-            return userToReturn;
+            oauthlogintoken = new Token(userToReturn.uuid, Token.Type.oauthlogin, Token.StorageType.CACHE, null, null, userToReturn, request.admin);
+            if (!await oauthlogintoken.Save(tx)) throw { success: false, message: "Error creating a token" };
         });
 
-        const response = NextResponse.redirect(`${CLIENT_URL}/profile/${finalUser.uuid}?oauth=success`);
+        if (!oauthlogintoken) return NextResponse.redirect(errorURL + encodeURIComponent(`OAuth token couldn't be created`));
+
+        const response = NextResponse.redirect(`${CLIENT_URL}/oauth?oauth=success`);
 
         response.cookies.set({
-            name: "user",
-            value: JSON.stringify(finalUser),
+            name: "token_" + oauthlogintoken.type,
+            value: oauthlogintoken.version + ":" + oauthlogintoken.token,
+            httpOnly: true,
             sameSite: "strict",
-            secure: process.env.NEXT_PUBLIC_SECURE === "true",
-            maxAge: 60 * 60 * 24 * 7
+            secure: process.env.SECURE === "true",
+            maxAge: oauthlogintoken.duration / 1000,
         });
 
         return response;

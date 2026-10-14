@@ -7,6 +7,7 @@ import { ActionHandler } from "@server/handler";
 import crypto from "crypto";
 import { Token } from "@server/token";
 import getTransporter from "@lib/mailer";
+import { ratelimiters } from "@server/ratelimiters";
 
 const EMAIL_HASH_SECRET = String(process.env.EMAIL_HASH_SECRET);
 const EMAIL_ENCRYPTION_SECRET_VERSION = String(process.env.EMAIL_ENCRYPTION_SECRET_VERSION);
@@ -17,6 +18,7 @@ export const register = ActionHandler<RegisterInput>({
     schema: RegisterSchema,
     transaction: true,
     turnstile: true,
+    ratelimiter: ratelimiters.register,
 
     handler: async ({ input, tx }) => {
         const emailHash = crypto.createHmac('sha256', EMAIL_HASH_SECRET).update(input.email).digest('hex');
@@ -25,12 +27,12 @@ export const register = ActionHandler<RegisterInput>({
         const provider = "OpacubeVIP";
 
         //Raw query because prisma doesn't support insertion checks
-        const [request] = await tx.$queryRaw<{ uuid: string; username: string; auth_method: string; avatar: boolean; inserted: boolean }[]>`
-            INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, avatar, srp_salt, srp_verifier)
+        const [request] = await tx.$queryRaw<{ uuid: string; username: string; auth_method: string; inserted: boolean }[]>`
+            INSERT INTO users (created_at, hashed_email, encrypted_email, auth_method, username, srp_salt, srp_verifier)
             VALUES (${new Date().toISOString()}, ${emailHash}, ${emailEncrypted}, ${provider}, ${input.username}, ${false}, ${input.srpSalt}, ${input.srpVerifier})
             ON CONFLICT (hashed_email)
             DO UPDATE SET hashed_email = users.hashed_email
-            RETURNING uuid, username, auth_method, avatar, (xmax = 0) AS inserted;
+            RETURNING uuid, username, auth_method, (xmax = 0) AS inserted;
         `;
         if (!request) return { success: false, message: "Error creating user" };
 

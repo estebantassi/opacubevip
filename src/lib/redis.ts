@@ -19,7 +19,7 @@ export default function getRedis() {
     return cachedRedis;
 }
 
-async function connectRedis() {
+export async function connectRedis() {
     if (!getRedis().isOpen) {
         await getRedis().connect();
     }

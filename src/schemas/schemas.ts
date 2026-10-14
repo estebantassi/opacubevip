@@ -1,9 +1,9 @@
 import { z } from "zod";
-import { UUID } from "@mytypes/types";
+import { Tag } from "@mytypes/types";
 
 export const UserProfileSchema = z
     .object({
-        uuid: UUID,
+        tag: Tag,
     })
 
 export type UserProfileInput = z.infer<typeof UserProfileSchema>;

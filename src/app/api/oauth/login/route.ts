@@ -9,6 +9,7 @@ const SERVER_URL = String(process.env.SERVER_URL);
 const SECURE = Boolean(process.env.SECURE === "true");
 
 export async function GET(req: Request) {
+    //Add rate limiting here
     const errorURL = CLIENT_URL + `/login?oauth=error&error=`;
 
     const url = new URL(req.url);

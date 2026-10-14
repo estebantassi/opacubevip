@@ -14,6 +14,8 @@ import OAuth from "@components/oauth";
 import Link from "next/link";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { TurnstileEnabled, TurnstileKey } from "@lib/env";
+import { withLoading } from "@tools/loading";
+import Spinner from "@components/spinner";
 
 export default function Login() {
     const turnstile = useTurnstile();
@@ -27,6 +29,8 @@ export default function Login() {
     const { AddToast } = useToast();
     const { setUser } = useAuth();
 
+    const [isLoading, setIsLoading] = useState(false);
+
     const [error, setError] = useState<string | null>(null);
 
     const isFormValid = Object.values(loginFormData).every(field => field.valid);
@@ -36,55 +40,57 @@ export default function Login() {
 
     async function Login(e: React.SubmitEvent<HTMLFormElement>) {
         e.preventDefault();
+        await withLoading(async () => {
+            //rare case of manually checking input, because we need the error to be shown.
+            const input = validateSchema({ email: loginFormData.email.value, turnstileToken}, LoginStartSchema);
+            if (!input.success) {
+                turnstile?.reset();
+                return setError(input.message);
+            }
+            
+            const fetchSRP = await APICall(loginStart, { email: loginFormData.email.value, turnstileToken }, LoginStartSchema);
+            if (!fetchSRP.success) {
+                turnstile?.reset();
+                return AddToast(fetchSRP.message, "error");
+            }
 
-        //rare case of manually checking input, because we need the error to be shown.
-        const input = validateSchema({ email: loginFormData.email.value, turnstileToken}, LoginStartSchema);
-        if (!input.success) {
-            turnstile?.reset();
-            return setError(input.message);
-        }
-        
-        const fetchSRP = await APICall(loginStart, { email: loginFormData.email.value, turnstileToken }, LoginStartSchema);
-        if (!fetchSRP.success) {
-            turnstile?.reset();
-            return AddToast(fetchSRP.message, "error");
-        }
+            const srpSalt = fetchSRP.data.srpSalt;
+            const srpServerEphemeral = fetchSRP.data.srpServerEphemeral;
 
-        const srpSalt = fetchSRP.data.srpSalt;
-        const srpServerEphemeral = fetchSRP.data.srpServerEphemeral;
+            const srpClientEphemeral = srp.generateEphemeral();
+            const srpPrivateKey = srp.derivePrivateKey(srpSalt, loginFormData.email.value, loginFormData.password.value);
+            const srpClientSession = srp.deriveSession(srpClientEphemeral.secret, srpServerEphemeral, srpSalt, loginFormData.email.value, srpPrivateKey);
 
-        const srpClientEphemeral = srp.generateEphemeral();
-        const srpPrivateKey = srp.derivePrivateKey(srpSalt, loginFormData.email.value, loginFormData.password.value);
-        const srpClientSession = srp.deriveSession(srpClientEphemeral.secret, srpServerEphemeral, srpSalt, loginFormData.email.value, srpPrivateKey);
+            const loginRequest = await APICall(login, {email: input.data.email, srpProof: srpClientSession.proof, srpEphemeral: srpClientEphemeral.public }, LoginSchema);
+            if (!loginRequest.success) {
+                turnstile?.reset();
+                return AddToast(loginRequest.message, "error");
+            }
 
-        const loginRequest = await APICall(login, {email: input.data.email, srpProof: srpClientSession.proof, srpEphemeral: srpClientEphemeral.public }, LoginSchema);
-        if (!loginRequest.success) {
-            turnstile?.reset();
-            return AddToast(loginRequest.message, "error");
-        }
+            try { srp.verifySession(srpClientEphemeral.public, srpClientSession, loginRequest.data.srpProof); } catch {
+                turnstile?.reset();
+                return AddToast("There was an error verifying the server's authenticity", "error");
+            }
 
-        try { srp.verifySession(srpClientEphemeral.public, srpClientSession, loginRequest.data.srpProof); } catch {
-            turnstile?.reset();
-            return AddToast("There was an error verifying the server's authenticity", "error");
-        }
+            setUser(loginRequest.data.user);
+            AddToast(loginRequest.message, "success");
 
-        setUser(loginRequest.data.user);
-        AddToast(loginRequest.message, "success");
-
-        return router.push('/profile/' + loginRequest.data.user.uuid);
+            return router.push('/profile/' + loginRequest.data.user.handle);
+        }, isLoading, setIsLoading);
     }
 
     return (
         <>
             <div className={`w-full flex justify-center items-center`}>
-                <form onSubmit={Login} className={`px-4 sm:my-20 sm:rounded-xl bg-content flex justify-center flex-col items-center w-full min-h-screen sm:min-h-full lg:w-[50vw] sm:w-[75vw] py-6`}>
+                <form onSubmit={Login} className={`relative px-4 sm:my-20 sm:rounded-xl bg-content flex justify-center flex-col items-center w-full min-h-screen sm:min-h-full lg:w-[50vw] sm:w-[75vw] py-6`}>
 
+                    {isLoading && <Spinner/>}
                     <OAuth/>
 
                     <hr className="my-8 w-full lg:w-[75%]" />
 
-                    <Input placeholder="Email" className='w-full lg:w-[50%] sm:w-[75%]' type="email" value={loginFormData.email.value} onChange={(e, valid) => setLoginFormData(prev => ({ ...prev, email: { value: e.target.value, valid } }))} />
-                    <Input validate={false} placeholder="Password" className='w-full lg:w-[50%] sm:w-[75%]' type="password" value={loginFormData.password.value} onChange={(e, valid) => setLoginFormData(prev => ({ ...prev, password: { value: e.target.value, valid } }))} />
+                    <Input placeholder="Email" className='m-2 w-full lg:w-[50%] sm:w-[75%]' type="email" value={loginFormData.email.value} onChange={(e, valid) => setLoginFormData(prev => ({ ...prev, email: { value: e.target.value, valid } }))} />
+                    <Input validate={false} placeholder="Password" className='m-2 w-full lg:w-[50%] sm:w-[75%]' type="password" value={loginFormData.password.value} onChange={(e, valid) => setLoginFormData(prev => ({ ...prev, password: { value: e.target.value, valid } }))} />
 
                     {TurnstileEnabled && <Turnstile
                         sitekey={TurnstileKey}
