@@ -6,7 +6,6 @@ import Navbar from "@components/navbar";
 import { AuthProvider } from "@contexts/authcontext";
 import { Suspense } from "react";
 import Footer from "@components/footer";
-import { AudioProvider } from "@contexts/audiocontext";
 import { ImageViewerProvider } from "@contexts/imageviewercontext";
 import { ModalProvider } from "@contexts/modalcontext";
 
@@ -30,7 +29,6 @@ export default function RootLayout({
             <ImageViewerProvider>
               <ToastProvider>
                 <AuthProvider>
-                  <AudioProvider>
                     <div className="min-h-screen flex flex-col">
                       <Navbar type="top" />
                       <main className="flex-1">
@@ -39,7 +37,6 @@ export default function RootLayout({
                       <Footer />
                       <Navbar type="bottom" />
                     </div>
-                  </AudioProvider>
                 </AuthProvider>
               </ToastProvider>
             </ImageViewerProvider>
